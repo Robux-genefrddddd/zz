@@ -3,7 +3,7 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Users,
