@@ -20,11 +20,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const AUTO_RESIZE_CONFIG = {
-  minHeight: 48,
-  maxHeight: 200,
-};
-
 const EMOJIS = [
   "😀",
   "😂",
@@ -36,12 +31,17 @@ const EMOJIS = [
   "😡",
   "🎉",
   "🔥",
-  "����",
+  "💯",
   "❤️",
   "✨",
   "🚀",
-  "���",
+  "🤯",
 ];
+
+const AUTO_RESIZE_CONFIG = {
+  minHeight: 48,
+  maxHeight: 200,
+};
 
 interface ChatMessage {
   id: string;
@@ -280,146 +280,170 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
   return (
     <div
       id="chat-area"
-      className="flex-1 flex flex-col bg-[#0e0e0e] min-h-0"
+      className="flex-1 flex flex-col min-h-0"
+      style={{ backgroundColor: "#0e0e0e" }}
     >
-      {/* Main Content Area - Messages Container with Fixed Height & Scrollbar */}
+      {/* Main Content Area - Messages Container */}
       <div className="flex-1 overflow-y-auto flex flex-col px-6 md:px-8 py-6 animate-fadeIn min-h-0 items-center">
-        {!conversationId ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div
-                className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center border-2 border-foreground/20 animate-scaleIn"
-                style={{
-                  backgroundImage:
-                    "url(https://cdn.builder.io/api/v1/image/assets%2Fafa67d28f8874020a08a6dc1ed05801d%2F340d671f0c4b45db8b30096668d2bc7c)",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "center",
-                  backgroundSize: "cover",
-                }}
-              />
-              <h2 className="text-lg font-semibold text-foreground mb-2 animate-slideUp">
-                Sélectionnez une conversation
-              </h2>
-              <p
-                className="text-sm text-foreground/60 animate-slideUp"
-                style={{ animationDelay: "0.1s" }}
-              >
-                Cliquez sur une conversation à gauche pour commencer
-              </p>
+        <div className="w-full max-w-2xl">
+          {!conversationId ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center">
+                <div
+                  className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center border-2 border-foreground/20 animate-scaleIn"
+                  style={{
+                    backgroundImage:
+                      "url(https://cdn.builder.io/api/v1/image/assets%2Fafa67d28f8874020a08a6dc1ed05801d%2F340d671f0c4b45db8b30096668d2bc7c)",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                  }}
+                />
+                <h2 className="text-lg font-semibold text-foreground mb-2 animate-slideUp">
+                  Sélectionnez une conversation
+                </h2>
+                <p
+                  className="text-sm text-foreground/60 animate-slideUp"
+                  style={{ animationDelay: "0.1s" }}
+                >
+                  Cliquez sur une conversation à gauche pour commencer
+                </p>
+              </div>
             </div>
-          </div>
-        ) : loadingMessages ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-foreground/50" />
-          </div>
-        ) : chatMessages.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div
-                className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center border-2 border-foreground/20 animate-scaleIn"
-                style={{
-                  backgroundImage:
-                    "url(https://cdn.builder.io/api/v1/image/assets%2Fafa67d28f8874020a08a6dc1ed05801d%2F340d671f0c4b45db8b30096668d2bc7c)",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "center",
-                  backgroundSize: "cover",
-                }}
-              />
-              <h2 className="text-lg font-semibold text-foreground mb-2 animate-slideUp">
-                Commencez une conversation
-              </h2>
-              <p
-                className="text-sm text-foreground/60 animate-slideUp"
-                style={{ animationDelay: "0.1s" }}
-              >
-                Tapez un message ci-dessous pour commencer
-              </p>
+          ) : loadingMessages ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-foreground/50" />
             </div>
-          </div>
-        ) : (
-          <div className="w-full max-w-2xl space-y-3 pb-4">
-            {chatMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex w-full ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                } animate-springFade`}
-              >
-                {msg.role === "user" ? (
-                  <div className="flex gap-2 items-start flex-row-reverse max-w-lg">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md border border-blue-400/50 overflow-hidden">
-                      {userData?.profilePhotoURL ? (
-                        <img
-                          src={userData.profilePhotoURL}
-                          alt={user?.displayName || "User"}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : user?.photoURL ? (
-                        <img
-                          src={user.photoURL}
-                          alt={user.displayName || "User"}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-xs font-bold text-white">
-                          {user?.displayName?.[0]?.toUpperCase() || "U"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 max-w-md max-h-96 overflow-y-auto">
-                      <div className="rounded-2xl rounded-tr-none px-4 py-3 text-white/95 text-sm leading-[1.55] break-words" style={{background: 'linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'}}>
-                        <MessageRenderer
-                          content={msg.content}
-                          role={msg.role}
-                        />
+          ) : chatMessages.length === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center">
+                <div
+                  className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center border-2 border-foreground/20 animate-scaleIn"
+                  style={{
+                    backgroundImage:
+                      "url(https://cdn.builder.io/api/v1/image/assets%2Fafa67d28f8874020a08a6dc1ed05801d%2F340d671f0c4b45db8b30096668d2bc7c)",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                  }}
+                />
+                <h2 className="text-lg font-semibold text-foreground mb-2 animate-slideUp">
+                  Commencez une conversation
+                </h2>
+                <p
+                  className="text-sm text-foreground/60 animate-slideUp"
+                  style={{ animationDelay: "0.1s" }}
+                >
+                  Tapez un message ci-dessous pour commencer
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 pb-4">
+              {chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex w-full ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  } animate-springFade`}
+                >
+                  {msg.role === "user" ? (
+                    <div className="flex gap-2 items-start flex-row-reverse max-w-lg">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md border border-blue-400/50 overflow-hidden">
+                        {userData?.profilePhotoURL ? (
+                          <img
+                            src={userData.profilePhotoURL}
+                            alt={user?.displayName || "User"}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : user?.photoURL ? (
+                          <img
+                            src={user.photoURL}
+                            alt={user.displayName || "User"}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs font-bold text-white">
+                            {user?.displayName?.[0]?.toUpperCase() || "U"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 max-w-md max-h-96 overflow-y-auto">
+                        <div
+                          className="rounded-2xl rounded-tr-none px-4 py-3 text-white/95 text-sm leading-[1.55] break-words"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)",
+                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
+                          }}
+                        >
+                          <MessageRenderer
+                            content={msg.content}
+                            role={msg.role}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
+                  ) : (
+                    <div className="flex gap-2 items-start max-w-lg">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-md border border-orange-400/50">
+                        <span className="text-xs font-bold text-white">V</span>
+                      </div>
+                      <div className="flex-1 max-w-md max-h-96 overflow-y-auto">
+                        <div
+                          className="rounded-2xl rounded-tl-none px-4 py-3 text-white/90 text-sm leading-[1.55] break-words"
+                          style={{
+                            backgroundColor: "#111418",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
+                          }}
+                        >
+                          <MessageRenderer
+                            content={msg.content}
+                            role={msg.role}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {(loading || isThinking) && (
+                <div className="flex w-full justify-start animate-springFade">
                   <div className="flex gap-2 items-start max-w-lg">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-md border border-orange-400/50">
                       <span className="text-xs font-bold text-white">V</span>
                     </div>
-                    <div className="flex-1 max-w-md max-h-96 overflow-y-auto">
-                      <div className="rounded-2xl rounded-tl-none px-4 py-3 text-white/90 text-sm leading-[1.55] break-words" style={{backgroundColor: '#111418', border: '1px solid rgba(255, 255, 255, 0.08)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'}}>
-                        <MessageRenderer
-                          content={msg.content}
-                          role={msg.role}
-                        />
-                      </div>
-                    </div>
+                    <ThinkingAnimation />
                   </div>
-                )}
-              </div>
-            ))}
-            {(loading || isThinking) && (
-              <div className="flex justify-start animate-springFade w-full">
-                <div className="flex gap-2 items-start max-w-lg">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-md border border-orange-400/50">
-                    <span className="text-xs font-bold text-white">V</span>
-                  </div>
-                  <ThinkingAnimation />
                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Message Input Area - Fixed at Bottom */}
       <div
         className="w-full px-6 md:px-8 py-6 animate-slideUp border-t"
-        style={{ borderColor: 'rgba(255, 255, 255, 0.08)', backgroundColor: '#0e0e0e' }}
+        style={{
+          borderColor: "rgba(255, 255, 255, 0.08)",
+          backgroundColor: "#0e0e0e",
+        }}
       >
         <div className="flex flex-col items-center w-full">
           <div className="w-full max-w-2xl">
             <div
-              className={`flex items-end gap-2 px-4 py-3 transition-all duration-300 group shadow-sm ${!conversationId ? "opacity-50 cursor-not-allowed" : "hover:shadow-md focus-within:shadow-md"}`}
+              className={`flex items-end gap-2 px-4 py-3 transition-all duration-300 group shadow-sm ${
+                !conversationId
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:shadow-md focus-within:shadow-md"
+              }`}
               style={{
-                backgroundColor: '#111',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '16px'
+                backgroundColor: "#111",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "16px",
               }}
             >
               <textarea
@@ -445,7 +469,7 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
                 className="flex-1 bg-transparent text-white placeholder-white/50 focus:outline-none text-sm leading-[1.55] disabled:opacity-50 transition-colors resize-none max-h-48"
                 style={{
                   height: `${AUTO_RESIZE_CONFIG.minHeight}px`,
-                  overflow: 'hidden'
+                  overflow: "hidden",
                 }}
               />
 
@@ -481,7 +505,9 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
                 disabled={loading || !message.trim()}
                 className="p-2 text-white/40 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 rounded-lg flex items-center justify-center flex-shrink-0 hover:scale-110 active:scale-95"
                 style={{
-                  color: !message.trim() ? 'rgba(255, 255, 255, 0.3)' : '#3b82f6'
+                  color: !message.trim()
+                    ? "rgba(255, 255, 255, 0.3)"
+                    : "#3b82f6",
                 }}
                 aria-label="Envoyer le message"
               >
@@ -492,31 +518,31 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
                 )}
               </button>
             </div>
+
+            {/* Image Generation Loading State */}
+            {generatingImage && (
+              <div className="flex items-center gap-3 px-4 py-3 mt-3 rounded-lg bg-gradient-to-r from-purple-600/20 to-purple-500/10 border border-purple-500/40 animate-pulse">
+                <div className="flex gap-1">
+                  <div
+                    className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
+                    style={{ animationDelay: "0s" }}
+                  />
+                  <div
+                    className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  />
+                  <div
+                    className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
+                    style={{ animationDelay: "0.4s" }}
+                  />
+                </div>
+                <span className="text-sm text-purple-300 font-medium">
+                  Génération d'image en cours...
+                </span>
+              </div>
+            )}
           </div>
         </div>
-
-          {/* Image Generation Loading State */}
-          {generatingImage && (
-            <div className="flex items-center gap-3 px-4 py-3 mt-2 rounded-lg bg-gradient-to-r from-purple-600/20 to-purple-500/10 border border-purple-500/40 animate-pulse">
-            <div className="flex gap-1">
-              <div
-                className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
-                style={{ animationDelay: "0s" }}
-              />
-              <div
-                className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
-                style={{ animationDelay: "0.2s" }}
-              />
-              <div
-                className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
-                style={{ animationDelay: "0.4s" }}
-              />
-            </div>
-            <span className="text-sm text-purple-300 font-medium">
-              Génération d'image en cours...
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
