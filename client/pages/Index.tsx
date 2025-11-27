@@ -21,6 +21,7 @@ export default function Index() {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(
     userData?.disclaimerAccepted || false,
   );
+  const [acknowledgedMaintenance, setAcknowledgedMaintenance] = useState(false);
 
   useEffect(() => {
     // Load first conversation if available
