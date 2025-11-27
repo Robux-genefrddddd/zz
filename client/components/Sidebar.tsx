@@ -419,8 +419,12 @@ export function Sidebar({
                     onClick={() => onConversationSelect?.(conv.id)}
                     className={`flex-1 text-left text-xs transition-all py-1 px-1 rounded-lg truncate ${
                       conv.id === activeConversationId
-                        ? "text-foreground font-medium"
-                        : "text-foreground/70 hover:text-foreground"
+                        ? isDark
+                          ? "text-foreground font-medium"
+                          : "text-[#1A1A1A] font-medium"
+                        : isDark
+                        ? "text-foreground/70 hover:text-foreground"
+                        : "text-[#3F3F3F]/70 hover:text-[#1A1A1A]"
                     }`}
                   >
                     {conv.name}
