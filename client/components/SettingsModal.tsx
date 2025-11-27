@@ -258,14 +258,38 @@ export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
 
             {/* Section 4: Email Display */}
             <div className="animate-fadeIn" style={{ animationDelay: "0.2s" }}>
-              <h3 className="text-xs font-semibold text-foreground/80 uppercase tracking-wider mb-3">
+              <h3
+                className={`text-xs font-semibold uppercase tracking-wider mb-3 transition-colors duration-300 ${
+                  isDark
+                    ? "text-foreground/80"
+                    : "text-[#3F3F3F]/70"
+                }`}
+              >
                 Compte
               </h3>
-              <div className="bg-white/[0.03] rounded-[10px] p-3.5 shadow-sm">
-                <p className="text-xs text-foreground/50 mb-1">
+              <div
+                className={`rounded-[10px] p-3.5 shadow-sm transition-all duration-300 ${
+                  isDark
+                    ? "bg-white/[0.03]"
+                    : "bg-[#FFFFFF] border border-black/[0.08]"
+                }`}
+              >
+                <p
+                  className={`text-xs mb-1 transition-colors duration-300 ${
+                    isDark
+                      ? "text-foreground/50"
+                      : "text-[#3F3F3F]/50"
+                  }`}
+                >
                   Adresse e-mail
                 </p>
-                <p className="text-sm text-foreground truncate">
+                <p
+                  className={`text-sm truncate transition-colors duration-300 ${
+                    isDark
+                      ? "text-foreground"
+                      : "text-[#1A1A1A]"
+                  }`}
+                >
                   {user?.email || "..."}
                 </p>
               </div>
