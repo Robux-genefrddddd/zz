@@ -208,7 +208,9 @@ export function Sidebar({
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 md:hidden"
+          className={`fixed inset-0 md:hidden transition-colors duration-300 ${
+            isDark ? "bg-black/50" : "bg-black/30"
+          }`}
           onClick={onClose}
         />
       )}
