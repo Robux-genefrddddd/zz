@@ -506,7 +506,13 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
                   >
                     {msg.role === "user" ? (
                       <div className="flex gap-2 items-start flex-row-reverse max-w-lg">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md border border-blue-400/50 overflow-hidden">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-md overflow-hidden border transition-all duration-300 ${
+                            isDark
+                              ? "bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400/50"
+                              : "bg-gradient-to-br from-blue-400 to-blue-500 border-blue-300/50"
+                          }`}
+                        >
                           {userData?.profilePhotoURL ? (
                             <img
                               src={userData.profilePhotoURL}
@@ -527,11 +533,15 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
                         </div>
                         <div className="flex-1 max-w-md max-h-96 overflow-y-auto">
                           <div
-                            className="rounded-2xl rounded-tr-none px-4 py-3 text-white/95 text-sm leading-[1.55] break-words"
+                            className="rounded-2xl rounded-tr-none px-4 py-3 text-sm leading-[1.55] break-words transition-all duration-300"
                             style={{
-                              background:
-                                "linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)",
-                              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
+                              background: isDark
+                                ? "linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)"
+                                : "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+                              color: "#FFFFFF",
+                              boxShadow: isDark
+                                ? "0 4px 16px rgba(0, 0, 0, 0.3)"
+                                : "0 2px 8px rgba(37, 99, 235, 0.2)",
                             }}
                           >
                             <MessageRenderer
