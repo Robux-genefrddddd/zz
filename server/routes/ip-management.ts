@@ -35,7 +35,21 @@ export const handleCheckIPBan: RequestHandler = async (req, res) => {
       return;
     }
 
+    // If Firebase Admin is not initialized, return no ban
+    if (!isAdminInitialized()) {
+      console.warn(
+        "Firebase Admin not initialized. Set FIREBASE_SERVICE_ACCOUNT_KEY env var for IP ban checking.",
+      );
+      res.json({ banned: false });
+      return;
+    }
+
     const db = getAdminDb();
+    if (!db) {
+      res.json({ banned: false });
+      return;
+    }
+
     const snapshot = await db
       .collection("ip_bans")
       .where("ipAddress", "==", ipAddress)
