@@ -31,7 +31,7 @@ const EMOJIS = [
   "🤔",
   "😢",
   "😡",
-  "����",
+  "🎉",
   "🔥",
   "💯",
   "❤️",
@@ -670,19 +670,33 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
                 <PopoverTrigger asChild>
                   <button
                     id="emoji-btn"
-                    className="p-2 text-white/40 hover:text-white/70 transition-all duration-200 rounded-lg flex-shrink-0"
+                    className={`p-2 transition-all duration-200 rounded-lg flex-shrink-0 ${
+                      isDark
+                        ? "text-white/40 hover:text-white/70"
+                        : "text-[#3F3F3F]/40 hover:text-[#3F3F3F]/70"
+                    }`}
                     aria-label="Ajouter un emoji"
                   >
                     <Smile size={18} />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-3 bg-card border border-white/20 rounded-2xl shadow-xl">
+                <PopoverContent
+                  className={`w-64 p-3 border rounded-2xl shadow-xl transition-colors duration-300 ${
+                    isDark
+                      ? "bg-card border-white/20"
+                      : "bg-[#FFFFFF] border-black/[0.08]"
+                  }`}
+                >
                   <div className="grid grid-cols-5 gap-2">
                     {EMOJIS.map((emoji) => (
                       <button
                         key={emoji}
                         onClick={() => addEmoji(emoji)}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-xl hover:scale-125 transform"
+                        className={`p-2 rounded-lg transition-all duration-200 text-xl hover:scale-125 transform ${
+                          isDark
+                            ? "hover:bg-white/10"
+                            : "hover:bg-black/[0.05]"
+                        }`}
                       >
                         {emoji}
                       </button>
