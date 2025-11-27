@@ -144,7 +144,40 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, loading, isThinking]);
+  }, [chatMessages, loading, isThinking, typingText]);
+
+  // Handle saving message to Firebase when typing is complete
+  useEffect(() => {
+    if (!isTyping && typingText && fullText && conversationId && user) {
+      const saveMessage = async () => {
+        try {
+          // Update the last message with the full typed text
+          setChatMessages((prev) => {
+            const updated = [...prev];
+            if (updated.length > 0 && updated[updated.length - 1].role === "assistant") {
+              updated[updated.length - 1].content = fullText;
+            }
+            return updated;
+          });
+
+          // Save to Firebase
+          await MessagesService.addMessage(
+            conversationId,
+            user.uid,
+            `assistant:${fullText}`,
+          );
+
+          // Reset typing state
+          setTypingText("");
+          setFullText("");
+        } catch (error) {
+          console.error("Error saving message:", error);
+        }
+      };
+
+      saveMessage();
+    }
+  }, [isTyping, typingText, fullText, conversationId, user]);
 
   const loadMessages = async () => {
     if (!conversationId) return;
