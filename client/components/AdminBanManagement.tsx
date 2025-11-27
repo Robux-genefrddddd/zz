@@ -27,11 +27,6 @@ export default function AdminBanManagement({ users }: AdminBanManagementProps) {
   const [bans, setBans] = useState<UserBan[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingBan, setSavingBan] = useState(false);
-  const [ipBans, setIPBans] = useState<any[]>([]);
-  const [banIPAddress, setBanIPAddress] = useState("");
-  const [banIPReason, setBanIPReason] = useState("");
-  const [banIPDuration, setBanIPDuration] = useState<number | null>(null);
-  const [savingIPBan, setSavingIPBan] = useState(false);
 
   // Search and filter states
   const [userSearchQuery, setUserSearchQuery] = useState("");
