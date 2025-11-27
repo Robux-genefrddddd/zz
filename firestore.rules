@@ -37,9 +37,9 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.userId == request.auth.uid;
     }
     
-    // Messages collection - user can access their messages
+    // Messages collection - user can read/write messages in their own conversations
     match /messages/{messageId} {
-      allow read: if isAuth() && resource.data.userId == request.auth.uid;
+      allow read: if isAuth() && exists(/databases/$(database)/documents/conversations/$(resource.data.conversationId)) && get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.userId == request.auth.uid;
       allow create: if isAuth();
       allow update: if isAuth() && resource.data.userId == request.auth.uid;
       allow delete: if isAuth() && resource.data.userId == request.auth.uid;
