@@ -1,4 +1,4 @@
-import { Send, Smile, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -17,34 +17,7 @@ import { toast } from "sonner";
 import { MessageRenderer } from "@/components/MessageRenderer";
 import { ThinkingAnimation } from "@/components/ThinkingAnimation";
 import { TypingIndicator } from "@/components/TypingIndicator";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-const EMOJIS = [
-  "😀",
-  "😂",
-  "😍",
-  "🥰",
-  "😎",
-  "🤔",
-  "😢",
-  "😡",
-  "🎉",
-  "🔥",
-  "💯",
-  "❤️",
-  "✨",
-  "🚀",
-  "🤯",
-];
-
-const AUTO_RESIZE_CONFIG = {
-  minHeight: 24,
-  maxHeight: 120,
-};
+import { ChatInput } from "@/components/ChatInput";
 
 interface ChatMessage {
   id: string;
