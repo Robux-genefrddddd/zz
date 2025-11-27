@@ -30,7 +30,6 @@ export default function AdminBanManagement({ users }: AdminBanManagementProps) {
 
   // Search and filter states
   const [userSearchQuery, setUserSearchQuery] = useState("");
-  const [ipSearchQuery, setIPSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "ban" | "warn">("all");
   const [showExpired, setShowExpired] = useState(false);
 
