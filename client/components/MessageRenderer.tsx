@@ -271,7 +271,7 @@ function parseMarkdownElements(text: string, isDark: boolean): ReactNode[] {
   return elements;
 }
 
-function parseInlineMarkdown(text: string): ReactNode[] {
+function parseInlineMarkdown(text: string, isDark: boolean): ReactNode[] {
   const parts: ReactNode[] = [];
   let lastIndex = 0;
 
