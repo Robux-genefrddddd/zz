@@ -23,6 +23,8 @@ export default function Register() {
   const [captcha, setCaptcha] = useState<CaptchaData | null>(null);
   const [captchaInput, setCaptchaInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showTOSModal, setShowTOSModal] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
   const navigate = useNavigate();
 
   // Generate random math captcha on component mount
