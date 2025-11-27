@@ -427,9 +427,9 @@ export function Sidebar({
 
       {/* Edit Conversation Modal */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-card border-2 border-white rounded-xl">
+        <DialogContent className="bg-card border border-white/[0.1] rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-foreground text-lg font-semibold">
               Modifier la Conversation
             </DialogTitle>
           </DialogHeader>
@@ -439,24 +439,25 @@ export function Sidebar({
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Nom de la conversation..."
-              className="w-full bg-background border border-white/30 rounded-lg px-4 py-2 text-foreground placeholder-foreground/40 focus:outline-none focus:border-white transition-colors"
+              className="w-full bg-white/[0.02] border border-white/[0.1] rounded-lg px-4 py-2.5 text-foreground placeholder-foreground/40 focus:outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-colors text-sm"
               onKeyPress={(e) => {
                 if (e.key === "Enter") {
                   handleSaveEdit();
                 }
               }}
+              autoFocus
             />
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <button
               onClick={() => setIsDialogOpen(false)}
-              className="px-4 py-2 text-foreground/70 border border-white/30 rounded-lg hover:bg-white/5 transition-colors"
+              className="px-4 py-2.5 text-foreground/70 border border-white/[0.1] rounded-lg hover:bg-white/[0.05] transition-colors text-sm font-medium hover:-translate-y-0.5"
             >
               Annuler
             </button>
             <button
               onClick={handleSaveEdit}
-              className="px-4 py-2 bg-white/20 text-foreground border border-white rounded-lg hover:bg-white/30 transition-colors font-medium"
+              className="px-4 py-2.5 bg-primary/20 text-primary border border-primary/30 rounded-lg hover:bg-primary/30 transition-colors font-medium text-sm hover:-translate-y-0.5"
             >
               Enregistrer
             </button>
