@@ -12,13 +12,11 @@ import {
   X,
   Ban,
   AlertCircle,
-  Globe,
   TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { UserData, PlanType } from "@/contexts/AuthContext";
 import { SystemNoticesService } from "@/lib/system-notices";
-import { IPService, UserIP } from "@/lib/ip-service";
 
 interface AdminUsersListProps {
   onBanUser?: (email: string) => void;
