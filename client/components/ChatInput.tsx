@@ -83,9 +83,6 @@ export function ChatInput({
         border: isDark
           ? "1px solid rgba(255,255,255,0.08)"
           : "1px solid rgba(255,255,255,0.2)",
-        boxShadow: isDark
-          ? "0 4px 14px rgba(0,0,0,0.4)"
-          : "0 2px 8px rgba(0,0,0,0.06)",
         transition: "all 200ms ease",
       }}
     >
