@@ -290,9 +290,9 @@ export function Sidebar({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className={`w-40 p-1 border rounded-lg shadow-lg transition-all duration-300 ${
+                  className={`w-48 p-2 border rounded-xl shadow-2xl transition-all duration-300 backdrop-blur-md ${
                     isDark
-                      ? "bg-card border-white/[0.1]"
+                      ? "bg-[#0a0a0a] border-white/[0.08]"
                       : "bg-[#FAFAFA] border-black/[0.08]"
                   }`}
                 >
