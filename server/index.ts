@@ -131,7 +131,6 @@ export function createServer() {
   // AI chat route (requires auth, very strict rate limit - 10 requests per minute per user)
   apiRouter.post("/ai/chat", serverRateLimit(60000, 10), handleAIChat);
   apiRouter.get("/ai/config", handleGetAIConfigSettings);
-  apiRouter.put("/ai/config", serverRateLimit(60000, 5), handleUpdateAIConfig);
 
   // Admin routes (require authentication + stricter rate limiting)
   const adminRateLimit = serverRateLimit(60000, 10); // 10 requests per minute per user
@@ -153,9 +152,9 @@ export function createServer() {
   apiRouter.post("/admin/invalidate-license", adminRateLimit, handleInvalidateLicense);
   apiRouter.post("/admin/purge-licenses", adminRateLimit, handlePurgeLicenses);
 
-  // AI configuration
-  apiRouter.get("/admin/ai-config", adminRateLimit, handleGetAIConfig);
-  apiRouter.put("/admin/ai-config", adminRateLimit, handleUpdateAIConfig);
+  // AI configuration (admin only)
+  apiRouter.get("/admin/ai-config", adminRateLimit, handleGetAIConfigAdmin);
+  apiRouter.put("/admin/ai-config", adminRateLimit, handleUpdateAIConfigAdmin);
 
   // System stats
   apiRouter.get("/admin/system-stats", adminRateLimit, handleGetSystemStats);
