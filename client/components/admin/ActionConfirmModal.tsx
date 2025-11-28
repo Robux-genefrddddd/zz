@@ -70,6 +70,7 @@ export default function ActionConfirmModal({
     red: "bg-red-500/10 border-red-500/20 text-red-400",
     emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
     amber: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+    blue: "bg-blue-500/10 border-blue-500/20 text-blue-400",
   };
 
   const buttonClasses = {
@@ -78,6 +79,7 @@ export default function ActionConfirmModal({
     red: "bg-red-500 hover:bg-red-600 text-white",
     emerald: "bg-emerald-500 hover:bg-emerald-600 text-white",
     amber: "bg-amber-500 hover:bg-amber-600 text-white",
+    blue: "bg-blue-500 hover:bg-blue-600 text-white",
   };
 
   return (
