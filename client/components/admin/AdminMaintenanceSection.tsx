@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import {
@@ -8,7 +8,9 @@ import {
   AlertCircle,
   CheckCircle2,
   AlertTriangle,
+  Power,
 } from "lucide-react";
+import MaintenanceModal, { MaintenanceType, MaintenanceData } from "./MaintenanceModal";
 
 export default function AdminMaintenanceSection() {
   const [loading, setLoading] = useState<string | null>(null);
