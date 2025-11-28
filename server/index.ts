@@ -32,6 +32,12 @@ import {
   handleDisableGlobalMaintenance,
   handleEnablePartialMaintenance,
   handleDisablePartialMaintenance,
+  handleEnableIAMaintenance,
+  handleDisableIAMaintenance,
+  handleEnableLicenseMaintenance,
+  handleDisableLicenseMaintenance,
+  handleEnablePlannedMaintenance,
+  handleDisablePlannedMaintenance,
 } from "./routes/admin";
 import {
   handleCheckIPBan,
