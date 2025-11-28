@@ -7,14 +7,11 @@ export function BackgroundPlusPattern() {
       className="fixed inset-0 -z-20 pointer-events-none overflow-hidden"
       style={{
         backgroundColor: '#090909',
-        backgroundImage: `
-          radial-gradient(circle at center, rgba(255,255,255,0.03), rgba(0,0,0,0.4) 60%),
-          url("${svgPattern}")
-        `,
-        backgroundSize: '100% 100%, 40px 40px',
-        backgroundPosition: '0 0, 0 0',
-        backgroundRepeat: 'no-repeat, repeat',
-        backgroundAttachment: 'fixed, fixed',
+        backgroundImage: `url("${svgPattern}")`,
+        backgroundSize: '40px 40px',
+        backgroundPosition: '0 0',
+        backgroundRepeat: 'repeat',
+        backgroundAttachment: 'fixed',
       }}
     >
 
