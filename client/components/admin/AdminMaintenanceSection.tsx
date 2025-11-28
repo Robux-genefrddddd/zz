@@ -44,7 +44,9 @@ export default function AdminMaintenanceSection() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || "Erreur lors de l'opération");
+        throw new Error(
+          data.message || data.error || "Erreur lors de l'opération",
+        );
       }
 
       if (!data.success) {
@@ -88,7 +90,9 @@ export default function AdminMaintenanceSection() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || "Erreur lors de l'opération");
+        throw new Error(
+          data.message || data.error || "Erreur lors de l'opération",
+        );
       }
 
       if (!data.success) {

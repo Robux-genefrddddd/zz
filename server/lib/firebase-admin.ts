@@ -74,11 +74,9 @@ export class FirebaseAdminService {
       .get();
 
     if (!userDoc.exists || !userDoc.data()?.isAdmin) {
-      await this.logAdminAction(
-        decodedToken.uid,
-        "UNAUTHORIZED_ADMIN_ACCESS",
-        { reason: "Not an admin" },
-      );
+      await this.logAdminAction(decodedToken.uid, "UNAUTHORIZED_ADMIN_ACCESS", {
+        reason: "Not an admin",
+      });
       throw new Error("Unauthorized: Not an admin");
     }
 
@@ -169,11 +167,7 @@ export class FirebaseAdminService {
   }
 
   // Ban user
-  static async banUser(
-    adminUid: string,
-    userId: string,
-    reason: string,
-  ) {
+  static async banUser(adminUid: string, userId: string, reason: string) {
     if (!adminDb) throw new Error("Database not initialized");
 
     const user = await this.getUser(userId);
@@ -301,10 +295,7 @@ export class FirebaseAdminService {
   static async getAllLicenses(limit = 100) {
     if (!adminDb) throw new Error("Database not initialized");
 
-    const snapshot = await adminDb
-      .collection("licenses")
-      .limit(limit)
-      .get();
+    const snapshot = await adminDb.collection("licenses").limit(limit).get();
 
     return snapshot.docs.map((doc) => ({
       key: doc.id,
@@ -379,8 +370,13 @@ export class FirebaseAdminService {
     const adminUsers = users.filter((u) => u.isAdmin).length;
     const bannedUsers = users.filter((u) => u.isBanned).length;
     const freeUsers = users.filter((u) => u.plan === "Free").length;
-    const proUsers = users.filter((u) => u.plan === "Classic" || u.plan === "Pro").length;
-    const totalMessages = users.reduce((sum, u) => sum + (u.messagesUsed || 0), 0);
+    const proUsers = users.filter(
+      (u) => u.plan === "Classic" || u.plan === "Pro",
+    ).length;
+    const totalMessages = users.reduce(
+      (sum, u) => sum + (u.messagesUsed || 0),
+      0,
+    );
     const totalLicenses = licenses.length;
     const usedLicenses = licenses.filter((l) => l.usedBy).length;
     const activeLicenses = licenses.filter((l) => l.valid).length;
@@ -408,7 +404,8 @@ export class FirebaseAdminService {
       freeUsers,
       proUsers,
       totalMessages,
-      avgMessagesPerUser: totalUsers > 0 ? Math.round(totalMessages / totalUsers) : 0,
+      avgMessagesPerUser:
+        totalUsers > 0 ? Math.round(totalMessages / totalUsers) : 0,
       totalLicenses,
       usedLicenses,
       activeLicenses,
@@ -514,7 +511,8 @@ export class FirebaseAdminService {
         model: "x-ai/grok-4.1-fast:free",
         temperature: 0.7,
         maxTokens: 2048,
-        systemPrompt: "You are a helpful assistant. Always respond in the user's language.",
+        systemPrompt:
+          "You are a helpful assistant. Always respond in the user's language.",
       };
     }
 

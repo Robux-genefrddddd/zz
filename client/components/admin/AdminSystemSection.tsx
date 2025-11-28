@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
-import { Loader2, Users, Zap, FileText, Activity, AlertCircle } from "lucide-react";
+import {
+  Loader2,
+  Users,
+  Zap,
+  FileText,
+  Activity,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -306,7 +313,9 @@ export default function AdminSystemSection() {
                 Taux d'utilisation:{" "}
                 <span className="text-white font-semibold">
                   {stats.totalLicenses > 0
-                    ? Math.round((stats.usedLicenses / stats.totalLicenses) * 100)
+                    ? Math.round(
+                        (stats.usedLicenses / stats.totalLicenses) * 100,
+                      )
                     : 0}
                   %
                 </span>

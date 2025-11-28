@@ -5,9 +5,7 @@ import { handleDemo } from "./routes/demo";
 import { handleGetIP, handleCheckVPN } from "./routes/ip-detection";
 import { handleActivateLicense } from "./routes/license";
 import { handleDailyReset } from "./routes/daily-reset";
-import {
-  handleAIChat,
-} from "./routes/ai";
+import { handleAIChat } from "./routes/ai";
 import {
   handleVerifyAdmin,
   handleGetAllUsers,
@@ -143,13 +141,21 @@ export function createServer() {
   apiRouter.post("/admin/unban-user", adminRateLimit, handleUnbanUser);
   apiRouter.post("/admin/reset-messages", adminRateLimit, handleResetMessages);
   apiRouter.post("/admin/delete-user", adminRateLimit, handleDeleteUser);
-  apiRouter.post("/admin/update-user-plan", adminRateLimit, handleUpdateUserPlan);
+  apiRouter.post(
+    "/admin/update-user-plan",
+    adminRateLimit,
+    handleUpdateUserPlan,
+  );
   apiRouter.get("/admin/banned-users", adminRateLimit, handleGetBannedUsers);
 
   // License management
   apiRouter.get("/admin/licenses", adminRateLimit, handleGetLicenses);
   apiRouter.post("/admin/create-license", adminRateLimit, handleCreateLicense);
-  apiRouter.post("/admin/invalidate-license", adminRateLimit, handleInvalidateLicense);
+  apiRouter.post(
+    "/admin/invalidate-license",
+    adminRateLimit,
+    handleInvalidateLicense,
+  );
   apiRouter.post("/admin/purge-licenses", adminRateLimit, handlePurgeLicenses);
 
   // AI configuration (admin only)

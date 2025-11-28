@@ -18,7 +18,9 @@ export default function AdminLicensesSection() {
   const [error, setError] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [generatingLicense, setGeneratingLicense] = useState(false);
-  const [planToGenerate, setPlanToGenerate] = useState<"Free" | "Classic" | "Pro">("Pro");
+  const [planToGenerate, setPlanToGenerate] = useState<
+    "Free" | "Classic" | "Pro"
+  >("Pro");
   const [validityDays, setValidityDays] = useState(365);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 

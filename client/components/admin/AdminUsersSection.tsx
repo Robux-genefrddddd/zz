@@ -257,9 +257,7 @@ export default function AdminUsersSection() {
                 <div
                   className="px-6 py-4 flex items-center justify-between cursor-pointer"
                   onClick={() =>
-                    setExpandedUser(
-                      expandedUser === user.uid ? null : user.uid,
-                    )
+                    setExpandedUser(expandedUser === user.uid ? null : user.uid)
                   }
                 >
                   <div className="flex-1">

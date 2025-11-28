@@ -9,6 +9,7 @@ A fully production-ready admin panel system completely integrated with Firebase 
 ### Backend (Node.js/Express)
 
 #### Firebase Admin SDK Integration (`server/lib/firebase-admin.ts`)
+
 - **Secure initialization** with service account credentials
 - **Admin verification** via idToken validation with verifyIdToken()
 - **Comprehensive logging** of all admin actions to Firestore
@@ -17,6 +18,7 @@ A fully production-ready admin panel system completely integrated with Firebase 
 #### Secure Routes (`server/routes/admin.ts`)
 
 All routes require:
+
 1. **Bearer token authentication** - Valid Firebase idToken
 2. **Admin verification** - Verified admin status from Firestore
 3. **Input validation** - Zod schemas for all requests
@@ -25,6 +27,7 @@ All routes require:
 Routes implemented:
 
 **User Management:**
+
 - `GET /api/admin/users` - List all users with details
 - `POST /api/admin/promote-user` - Promote user to admin
 - `POST /api/admin/demote-user` - Demote admin to user
@@ -36,21 +39,25 @@ Routes implemented:
 - `GET /api/admin/banned-users` - List banned users
 
 **License Management:**
+
 - `GET /api/admin/licenses` - List all licenses
 - `POST /api/admin/create-license` - Generate new license
 - `POST /api/admin/invalidate-license` - Mark license invalid
 - `POST /api/admin/purge-licenses` - Delete invalid licenses
 
 **AI Configuration:**
+
 - `GET /api/admin/ai-config` - Get current AI settings
 - `PUT /api/admin/ai-config` - Update AI model & parameters
 
 **System Management:**
+
 - `GET /api/admin/system-stats` - Real Firestore statistics
 - `GET /api/admin/logs` - Admin action audit logs
 - `POST /api/admin/clear-logs` - Archive old logs
 
 **Verification:**
+
 - `POST /api/admin/verify` - Check admin status
 
 ### Frontend (React)
@@ -58,6 +65,7 @@ Routes implemented:
 #### Admin Dashboard Pages
 
 **1. Users Management (`AdminUsersSection.tsx`)**
+
 - Real-time user list from Firebase
 - Expandable rows for detailed actions
 - Status badges (Admin/User/Banned)
@@ -67,6 +75,7 @@ Routes implemented:
 - Professional UI with dark theme
 
 **2. Licenses Management (`AdminLicensesSection.tsx`)**
+
 - View all licenses with details
 - Generate new licenses with plan selection
 - Copy license keys to clipboard
@@ -74,6 +83,7 @@ Routes implemented:
 - License validity tracking
 
 **3. AI Configuration (`AdminAIConfigSection.tsx`)**
+
 - Set AI model (freeform text input)
 - Adjust temperature (0-2 scale with visual slider)
 - Configure max tokens (100-4000)
@@ -82,6 +92,7 @@ Routes implemented:
 - Save with confirmation
 
 **4. System Dashboard (`AdminSystemSection.tsx`)**
+
 - Real Firestore statistics:
   - Total users & admin count
   - License usage metrics
@@ -93,6 +104,7 @@ Routes implemented:
 - Auto-refresh every 60 seconds
 
 **5. Maintenance Tools (`AdminMaintenanceSection.tsx`)**
+
 - Clear old admin logs (with day selection)
 - Purge invalid licenses
 - Confirmation modals
@@ -203,46 +215,52 @@ admin_logs/
 ## Features
 
 ### User Management
+
 ✅ List all users with pagination  
 ✅ Promote/demote admin status  
 ✅ Ban users with reasons  
 ✅ Reset message quotas  
 ✅ Delete user (both Auth & Firestore)  
 ✅ Change user plan with limits  
-✅ View banned users  
+✅ View banned users
 
 ### License System
+
 ✅ Generate licenses with validity period  
 ✅ Track license usage  
 ✅ Invalidate licenses  
 ✅ Purge invalid licenses  
-✅ Real-time license statistics  
+✅ Real-time license statistics
 
 ### AI Management
+
 ✅ Configure AI model dynamically  
 ✅ Adjust temperature for randomness  
 ✅ Set token limits  
 ✅ Custom system prompts  
-✅ Real-time config updates used by chat API  
+✅ Real-time config updates used by chat API
 
 ### System Monitoring
+
 ✅ Real Firestore statistics  
 ✅ User distribution charts  
 ✅ 7-day activity timeline  
 ✅ License usage metrics  
 ✅ Message statistics  
-✅ Auto-refresh every 60 seconds  
+✅ Auto-refresh every 60 seconds
 
 ### Maintenance Tools
+
 ✅ Clear logs by age  
 ✅ Purge invalid licenses  
 ✅ Admin action audit trails  
 ✅ Timestamp tracking  
-✅ Confirmation dialogs  
+✅ Confirmation dialogs
 
 ## UI/UX Design
 
 ### Professional SaaS Style
+
 - Dark theme (Tailwind dark)
 - Minimal design with proper spacing
 - No emojis or playful elements
@@ -252,6 +270,7 @@ admin_logs/
 - Clean typography hierarchy
 
 ### Components
+
 - Tabbed navigation with icons
 - Expandable rows for actions
 - Confirmation modals for destructive actions
@@ -262,6 +281,7 @@ admin_logs/
 - Toast notifications for feedback
 
 ### Accessibility
+
 - Clear labels and descriptions
 - Disabled states for loading/invalid
 - Keyboard navigation support
@@ -284,6 +304,7 @@ Before deploying to production:
    - [ ] APP_URL (for security headers)
 
 3. **Firestore Rules**
+
    ```
    rules_version = '2';
    service cloud.firestore {
@@ -327,6 +348,7 @@ Before deploying to production:
 ## API Examples
 
 ### Promote User
+
 ```bash
 curl -X POST http://localhost:8080/api/admin/promote-user \
   -H "Authorization: Bearer {idToken}" \
@@ -337,6 +359,7 @@ curl -X POST http://localhost:8080/api/admin/promote-user \
 ```
 
 ### Create License
+
 ```bash
 curl -X POST http://localhost:8080/api/admin/create-license \
   -H "Authorization: Bearer {idToken}" \
@@ -348,6 +371,7 @@ curl -X POST http://localhost:8080/api/admin/create-license \
 ```
 
 ### Update AI Config
+
 ```bash
 curl -X PUT http://localhost:8080/api/admin/ai-config \
   -H "Authorization: Bearer {idToken}" \
@@ -363,17 +387,20 @@ curl -X PUT http://localhost:8080/api/admin/ai-config \
 ## Troubleshooting
 
 ### Firebase Not Initialized
+
 - Check FIREBASE_SERVICE_ACCOUNT_KEY environment variable
 - Ensure service account has proper permissions
 - Check Firestore is enabled in project
 
 ### Admin Routes Return 401
+
 - Verify idToken is valid
 - Check user exists in Firestore with isAdmin=true
 - Verify token not expired
 - Check rate limit status
 
 ### Statistics Not Updating
+
 - Clear browser cache
 - Check Firestore data exists
 - Verify timestamps are in correct format
