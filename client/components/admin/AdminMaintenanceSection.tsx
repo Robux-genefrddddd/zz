@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import {
@@ -8,7 +8,20 @@ import {
   AlertCircle,
   CheckCircle2,
   AlertTriangle,
+  Power,
 } from "lucide-react";
+import MaintenanceModal, {
+  MaintenanceType,
+  MaintenanceData,
+} from "./MaintenanceModal";
+
+interface MaintenanceStatus {
+  global: boolean;
+  partial: boolean;
+  services: string[];
+  message: string;
+  startedAt: any;
+}
 
 export default function AdminMaintenanceSection() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -24,6 +37,45 @@ export default function AdminMaintenanceSection() {
     count: number;
     timestamp: Date;
   } | null>(null);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [maintenanceStatus, setMaintenanceStatus] =
+    useState<MaintenanceStatus | null>(null);
+  const [fetchingStatus, setFetchingStatus] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    fetchMaintenanceStatus(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  const fetchMaintenanceStatus = async (signal?: AbortSignal) => {
+    try {
+      setFetchingStatus(true);
+      const response = await fetch("/api/admin/maintenance-status", { signal });
+
+      if (!response.ok) {
+        throw new Error("Impossible de récupérer le statut");
+      }
+
+      const data = await response.json();
+      if (data.success && data.status) {
+        setMaintenanceStatus(data.status);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+      console.error("Error fetching maintenance status:", error);
+    } finally {
+      setFetchingStatus(false);
+    }
+  };
 
   const handleClearLogs = async () => {
     setLoading("clear-logs");
@@ -118,6 +170,97 @@ export default function AdminMaintenanceSection() {
     }
   };
 
+  const handleMaintenanceConfirm = async (
+    type: MaintenanceType,
+    data: MaintenanceData,
+  ) => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("Non authentifié");
+
+      const idToken = await currentUser.getIdToken();
+
+      let endpoint = "";
+      let body: any = {};
+
+      if (type === "global") {
+        endpoint = "/api/admin/enable-global-maintenance";
+        body = { message: data.message };
+      } else if (type === "partial") {
+        endpoint = "/api/admin/enable-partial-maintenance";
+        body = { services: data.services || [], message: data.message };
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          responseData.message ||
+            responseData.error ||
+            "Erreur lors de l'opération",
+        );
+      }
+
+      await fetchMaintenanceStatus();
+      toast.success("Maintenance activée avec succès");
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "Erreur lors de l'opération";
+      toast.error(errorMsg);
+      console.error("Error enabling maintenance:", error);
+    }
+  };
+
+  const handleDisableMaintenance = async (type: "global" | "partial") => {
+    try {
+      setLoading(`disable-${type}`);
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("Non authentifié");
+
+      const idToken = await currentUser.getIdToken();
+
+      const endpoint =
+        type === "global"
+          ? "/api/admin/disable-global-maintenance"
+          : "/api/admin/disable-partial-maintenance";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || "Erreur lors de l'opération",
+        );
+      }
+
+      await fetchMaintenanceStatus();
+      toast.success("Maintenance désactivée");
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "Erreur lors de l'opération";
+      toast.error(errorMsg);
+      console.error("Error disabling maintenance:", error);
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -127,6 +270,59 @@ export default function AdminMaintenanceSection() {
         <p className="text-sm text-foreground/60 mt-1">
           Outils d'administration et de maintenance
         </p>
+      </div>
+
+      {maintenanceStatus &&
+        (maintenanceStatus.global || maintenanceStatus.partial) && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={20} className="text-red-400 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-300">
+                  {maintenanceStatus.global
+                    ? "Maintenance globale active"
+                    : "Maintenance partielle active"}
+                </p>
+                <p className="text-sm text-red-300/70 mt-1">
+                  {maintenanceStatus.message}
+                </p>
+                <button
+                  onClick={() =>
+                    handleDisableMaintenance(
+                      maintenanceStatus.global ? "global" : "partial",
+                    )
+                  }
+                  disabled={loading !== null}
+                  className="text-xs text-red-300/70 hover:text-red-300 mt-2 underline"
+                >
+                  Désactiver maintenant
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      <div className="rounded-lg border border-white/5 bg-white/[0.02] p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="font-medium text-white flex items-center gap-2">
+              <Power size={18} />
+              Gestion de la maintenance
+            </h3>
+            <p className="text-sm text-foreground/60 mt-1">
+              Activer ou désactiver le mode maintenance
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setShowMaintenanceModal(true)}
+          disabled={loading !== null || fetchingStatus}
+          className="w-full px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {fetchingStatus && <Loader2 size={16} className="animate-spin" />}
+          Gérer la maintenance
+        </button>
       </div>
 
       {lastAction && (
@@ -284,6 +480,13 @@ export default function AdminMaintenanceSection() {
           </div>
         </div>
       )}
+
+      <MaintenanceModal
+        isOpen={showMaintenanceModal}
+        onClose={() => setShowMaintenanceModal(false)}
+        onConfirm={handleMaintenanceConfirm}
+        isLoading={loading !== null}
+      />
     </div>
   );
 }

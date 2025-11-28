@@ -20,12 +20,18 @@ import {
   handleGetLicenses,
   handleCreateLicense,
   handleInvalidateLicense,
+  handleDeleteLicense,
   handleGetAIConfig as handleGetAIConfigAdmin,
   handleUpdateAIConfig as handleUpdateAIConfigAdmin,
   handleGetSystemStats,
   handlePurgeLicenses,
   handleGetAdminLogs,
   handleClearOldLogs,
+  handleGetMaintenanceStatus,
+  handleEnableGlobalMaintenance,
+  handleDisableGlobalMaintenance,
+  handleEnablePartialMaintenance,
+  handleDisablePartialMaintenance,
 } from "./routes/admin";
 import {
   handleCheckIPBan,
@@ -156,6 +162,7 @@ export function createServer() {
     adminRateLimit,
     handleInvalidateLicense,
   );
+  apiRouter.post("/admin/delete-license", adminRateLimit, handleDeleteLicense);
   apiRouter.post("/admin/purge-licenses", adminRateLimit, handlePurgeLicenses);
 
   // AI configuration (admin only)
@@ -171,6 +178,29 @@ export function createServer() {
 
   // Verification
   apiRouter.post("/admin/verify", adminRateLimit, handleVerifyAdmin);
+
+  // Maintenance management
+  apiRouter.get("/admin/maintenance-status", handleGetMaintenanceStatus);
+  apiRouter.post(
+    "/admin/enable-global-maintenance",
+    adminRateLimit,
+    handleEnableGlobalMaintenance,
+  );
+  apiRouter.post(
+    "/admin/disable-global-maintenance",
+    adminRateLimit,
+    handleDisableGlobalMaintenance,
+  );
+  apiRouter.post(
+    "/admin/enable-partial-maintenance",
+    adminRateLimit,
+    handleEnablePartialMaintenance,
+  );
+  apiRouter.post(
+    "/admin/disable-partial-maintenance",
+    adminRateLimit,
+    handleDisablePartialMaintenance,
+  );
 
   // Mount API router
   app.use("/api", apiRouter);

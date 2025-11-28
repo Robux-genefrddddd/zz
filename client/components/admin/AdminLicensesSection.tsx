@@ -1,7 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
-import { Loader2, Plus, Copy, X, Check, AlertCircle } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Copy,
+  X,
+  Check,
+  AlertCircle,
+  AlertTriangle,
+  Trash2,
+} from "lucide-react";
 
 interface License {
   key: string;
@@ -24,6 +33,8 @@ export default function AdminLicensesSection() {
   >("Pro");
   const [validityDays, setValidityDays] = useState(365);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -122,6 +133,46 @@ export default function AdminLicensesSection() {
     navigator.clipboard.writeText(text);
     setCopiedKey(text);
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const deleteLicense = async (key: string) => {
+    try {
+      setDeletingKey(key);
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("Non authentifié");
+
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch("/api/admin/delete-license", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ licenseKey: key }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = "Erreur lors de la suppression";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      setLicenses((prev) => prev.filter((l) => l.key !== key));
+      toast.success("Licence supprimée avec succès");
+      setDeleteConfirm(null);
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "Erreur de suppression";
+      toast.error(errorMsg);
+      console.error("Error deleting license:", error);
+    } finally {
+      setDeletingKey(null);
+    }
   };
 
   if (loading) {
@@ -229,22 +280,32 @@ export default function AdminLicensesSection() {
                   {license.usedBy || "-"}
                 </td>
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() => copyToClipboard(license.key)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-white/10 hover:bg-white/20 text-white transition-colors"
-                  >
-                    {copiedKey === license.key ? (
-                      <>
-                        <Check size={14} />
-                        Copié
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={14} />
-                        Copier
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => copyToClipboard(license.key)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-white/10 hover:bg-white/20 text-white transition-colors"
+                    >
+                      {copiedKey === license.key ? (
+                        <>
+                          <Check size={14} />
+                          Copié
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={14} />
+                          Copier
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirm(license.key)}
+                      disabled={deletingKey === license.key}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-red-500/20 hover:bg-red-500/30 text-red-300 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 size={14} />
+                      Supprimer
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -317,6 +378,55 @@ export default function AdminLicensesSection() {
                   <Loader2 size={16} className="animate-spin" />
                 )}
                 Générer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-lg max-w-md w-full">
+            <div className="p-6 border-b border-white/5">
+              <div className="flex items-start gap-3">
+                <AlertTriangle size={24} className="text-red-400 mt-0.5" />
+                <div>
+                  <h2 className="text-lg font-semibold text-white">
+                    Supprimer la licence
+                  </h2>
+                  <p className="text-sm text-foreground/70 mt-2">
+                    Êtes-vous sûr de vouloir supprimer définitivement cette
+                    licence ?
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white/[0.02] border-y border-white/5">
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-xs bg-white/10 px-3 py-2 rounded text-amber-400 font-mono break-all">
+                  {deleteConfirm}
+                </code>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-white/5 flex items-center gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deletingKey !== null}
+                className="flex-1 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => deleteLicense(deleteConfirm)}
+                disabled={deletingKey !== null}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {deletingKey === deleteConfirm && (
+                  <Loader2 size={16} className="animate-spin" />
+                )}
+                Supprimer
               </button>
             </div>
           </div>
