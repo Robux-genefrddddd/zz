@@ -56,6 +56,11 @@ export function validateRequestSize(
  * Checks request body for suspicious patterns and injection attempts.
  */
 export function validateInput(req: Request, res: Response, next: NextFunction) {
+  // Skip validation for GET, DELETE, and HEAD requests (no body)
+  if (req.method === "GET" || req.method === "DELETE" || req.method === "HEAD") {
+    return next();
+  }
+
   if (!req.body || typeof req.body !== "object") {
     return next();
   }
