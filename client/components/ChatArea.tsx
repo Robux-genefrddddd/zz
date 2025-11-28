@@ -719,7 +719,7 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
       <div
         className="w-full px-6 md:px-8 py-5 transition-colors duration-300"
         style={{
-          backgroundColor: isDark ? "#0e0e0e" : "#F3F4F6",
+          backgroundColor: "transparent",
           animation: "fadeIn 200ms ease-out",
         }}
       >
