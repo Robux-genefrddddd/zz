@@ -32,6 +32,12 @@ import {
   handleDisableGlobalMaintenance,
   handleEnablePartialMaintenance,
   handleDisablePartialMaintenance,
+  handleEnableIAMaintenance,
+  handleDisableIAMaintenance,
+  handleEnableLicenseMaintenance,
+  handleDisableLicenseMaintenance,
+  handleEnablePlannedMaintenance,
+  handleDisablePlannedMaintenance,
 } from "./routes/admin";
 import {
   handleCheckIPBan,
@@ -200,6 +206,36 @@ export function createServer() {
     "/admin/disable-partial-maintenance",
     adminRateLimit,
     handleDisablePartialMaintenance,
+  );
+  apiRouter.post(
+    "/admin/enable-ia-maintenance",
+    adminRateLimit,
+    handleEnableIAMaintenance,
+  );
+  apiRouter.post(
+    "/admin/disable-ia-maintenance",
+    adminRateLimit,
+    handleDisableIAMaintenance,
+  );
+  apiRouter.post(
+    "/admin/enable-license-maintenance",
+    adminRateLimit,
+    handleEnableLicenseMaintenance,
+  );
+  apiRouter.post(
+    "/admin/disable-license-maintenance",
+    adminRateLimit,
+    handleDisableLicenseMaintenance,
+  );
+  apiRouter.post(
+    "/admin/enable-planned-maintenance",
+    adminRateLimit,
+    handleEnablePlannedMaintenance,
+  );
+  apiRouter.post(
+    "/admin/disable-planned-maintenance",
+    adminRateLimit,
+    handleDisablePlannedMaintenance,
   );
 
   // Mount API router

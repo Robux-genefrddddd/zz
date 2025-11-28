@@ -15,6 +15,10 @@ import {
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TOSProvider, useTOS } from "@/contexts/TOSContext";
+import {
+  MaintenanceProvider,
+  useMaintenance,
+} from "@/contexts/MaintenanceContext";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +30,7 @@ import Admin from "./pages/Admin";
 import { BanModal } from "@/components/BanModal";
 import TOSModal from "@/components/TOSModal";
 import MaintenanceScreen from "@/components/MaintenanceScreen";
+import MaintenanceBanner from "@/components/MaintenanceBanner";
 
 const queryClient = new QueryClient();
 
@@ -66,41 +71,9 @@ function AuthPages() {
   return user ? <Navigate to="/" replace /> : <></>;
 }
 
-interface MaintenanceStatus {
-  global: boolean;
-  partial: boolean;
-  services: string[];
-  message: string;
-  startedAt: any;
-}
-
-function MaintenanceWrapper({ children }: { children: React.ReactNode }) {
+function MaintenanceCheckWrapper({ children }: { children: React.ReactNode }) {
   const { user, userData } = useAuth();
-  const [maintenanceStatus, setMaintenanceStatus] =
-    useState<MaintenanceStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkMaintenance = async () => {
-      try {
-        const response = await fetch("/api/admin/maintenance-status");
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.status) {
-            setMaintenanceStatus(data.status);
-          }
-        }
-      } catch (error) {
-        console.error("Error checking maintenance:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkMaintenance();
-    const interval = setInterval(checkMaintenance, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const { maintenance, loading } = useMaintenance();
 
   if (loading) {
     return (
@@ -110,7 +83,7 @@ function MaintenanceWrapper({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (maintenanceStatus?.global && !userData?.isAdmin) {
+  if (maintenance?.global && !userData?.isAdmin) {
     return <MaintenanceScreen />;
   }
 
@@ -140,7 +113,7 @@ function AppRoutes() {
   }, [navigate, userData?.isAdmin]);
 
   return (
-    <MaintenanceWrapper>
+    <MaintenanceCheckWrapper>
       <TOSModal
         isOpen={showTOS}
         onAccept={() => {
@@ -151,31 +124,36 @@ function AppRoutes() {
           toast.info("Vous devez accepter les conditions pour continuer");
         }}
       />
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            <>
-              <AuthPages />
-              <Login />
-            </>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <>
-              <AuthPages />
-              <Register />
-            </>
-          }
-        />
-        <Route path="/admin" element={<AdminRoute element={<Admin />} />} />
-        <Route path="/" element={<ProtectedRoute element={<Index />} />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </MaintenanceWrapper>
+      <div className="min-h-screen flex flex-col">
+        <MaintenanceBanner />
+        <div className="flex-1">
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <>
+                  <AuthPages />
+                  <Login />
+                </>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <>
+                  <AuthPages />
+                  <Register />
+                </>
+              }
+            />
+            <Route path="/admin" element={<AdminRoute element={<Admin />} />} />
+            <Route path="/" element={<ProtectedRoute element={<Index />} />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+      </div>
+    </MaintenanceCheckWrapper>
   );
 }
 
@@ -183,16 +161,21 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <ThemeProvider>
-          <TOSProvider>
-            <Sonner />
-            <BrowserRouter
-              future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-            >
-              <AppRoutes />
-            </BrowserRouter>
-          </TOSProvider>
-        </ThemeProvider>
+        <MaintenanceProvider>
+          <ThemeProvider>
+            <TOSProvider>
+              <Sonner />
+              <BrowserRouter
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
+                }}
+              >
+                <AppRoutes />
+              </BrowserRouter>
+            </TOSProvider>
+          </ThemeProvider>
+        </MaintenanceProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

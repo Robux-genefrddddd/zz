@@ -11,11 +11,20 @@ import {
   Trash2,
   ChevronDown,
   AlertCircle,
+  MoreVertical,
+  Mail,
+  Calendar,
+  MessageSquare,
 } from "lucide-react";
 import ActionConfirmModal from "./ActionConfirmModal";
+import { dsClasses } from "@/lib/design-system";
+
+interface UserRow extends UserData {
+  isExpanded?: boolean;
+}
 
 export default function AdminUsersSection() {
-  const [users, setUsers] = useState<UserData[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
@@ -24,13 +33,13 @@ export default function AdminUsersSection() {
     email: string;
     plan?: "Free" | "Classic" | "Pro";
   } | null>(null);
-  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const abortControllerRef = useRef<AbortController | null>(null);
   const isLoadingRef = useRef(false);
 
   useEffect(() => {
-    // Prevent duplicate requests in strict mode
     if (isLoadingRef.current) return;
 
     const controller = new AbortController();
@@ -60,27 +69,22 @@ export default function AdminUsersSection() {
         signal,
       });
 
-      // Check response status before reading body
       if (!response.ok) {
         let errorMessage = "Erreur serveur";
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorData.error || errorMessage;
         } catch {
-          // If we can't parse error details, use the status text
           errorMessage = response.statusText || errorMessage;
         }
         throw new Error(errorMessage);
       }
 
-      // Parse successful response
       let data;
       try {
         data = await response.json();
       } catch (parseError) {
-        throw new Error(
-          "Impossible de traiter la réponse du serveur. Format invalide.",
-        );
+        throw new Error("Impossible de traiter la réponse du serveur");
       }
 
       if (!data.success || !data.users) {
@@ -89,38 +93,40 @@ export default function AdminUsersSection() {
 
       setUsers(data.users || []);
     } catch (error) {
-      // Don't show error if request was aborted (component unmounted)
       if (error instanceof Error && error.name === "AbortError") {
-        console.log("Users request was cancelled");
         return;
       }
 
       const errorMsg =
         error instanceof Error ? error.message : "Erreur lors du chargement";
       setError(errorMsg);
-      toast.error(errorMsg);
-      console.error("Error loading users:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAction = async (
+    type: "promote" | "demote" | "ban" | "unban" | "reset" | "delete" | "plan",
+    userId: string,
+    email: string,
+    plan?: "Free" | "Classic" | "Pro",
+  ) => {
+    setConfirmAction({ type, userId, email, plan });
+  };
+
   const executeAction = async () => {
     if (!confirmAction) return;
 
-    const { type, userId, email, plan } = confirmAction;
-    setActionLoading(userId);
-
     try {
+      setActionLoading(`${confirmAction.type}-${confirmAction.userId}`);
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error("Non authentifié");
 
       const idToken = await currentUser.getIdToken();
-
       let endpoint = "";
-      let body: any = { userId };
+      let body: any = { userId: confirmAction.userId };
 
-      switch (type) {
+      switch (confirmAction.type) {
         case "promote":
           endpoint = "/api/admin/promote-user";
           break;
@@ -129,7 +135,7 @@ export default function AdminUsersSection() {
           break;
         case "ban":
           endpoint = "/api/admin/ban-user";
-          body.reason = "Banned by administrator";
+          body.reason = "Violation des conditions d'utilisation";
           break;
         case "unban":
           endpoint = "/api/admin/unban-user";
@@ -142,7 +148,7 @@ export default function AdminUsersSection() {
           break;
         case "plan":
           endpoint = "/api/admin/update-user-plan";
-          body.plan = plan;
+          body.plan = confirmAction.plan;
           break;
       }
 
@@ -155,90 +161,43 @@ export default function AdminUsersSection() {
         body: JSON.stringify(body),
       });
 
-      // Check response status before reading body
+      const data = await response.json();
+
       if (!response.ok) {
-        let errorMessage = "Action échouée";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch {
-          // If we can't parse error details, use the status text
-          errorMessage = response.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
+        throw new Error(
+          data.message || data.error || "Erreur lors de l'opération",
+        );
       }
 
-      // Parse successful response
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        // Some endpoints might not return a body, which is fine
-        data = { success: true };
-      }
-
-      setUsers((prev) =>
-        prev.map((u) => {
-          if (u.uid !== userId) return u;
-
-          switch (type) {
-            case "promote":
-              return { ...u, isAdmin: true };
-            case "demote":
-              return { ...u, isAdmin: false };
-            case "ban":
-              return { ...u, isBanned: true as any };
-            case "unban":
-              return { ...u, isBanned: false as any };
-            case "reset":
-              return { ...u, messagesUsed: 0 };
-            case "plan":
-              const planLimits: Record<string, number> = {
-                Free: 10,
-                Classic: 100,
-                Pro: 1000,
-              };
-              return {
-                ...u,
-                plan: plan as any,
-                messagesLimit: planLimits[plan || "Free"],
-              };
-            default:
-              return u;
-          }
-        }),
-      );
-
-      const messages: Record<string, string> = {
-        promote: "Promu en administrateur",
-        demote: "Rétrogradé en utilisateur",
-        ban: "Utilisateur banni",
-        unban: "Utilisateur débanni",
-        reset: "Messages réinitialisés",
-        delete: "Utilisateur supprimé",
-        plan: "Plan d'utilisateur modifié",
-      };
-
-      toast.success(messages[type]);
-
-      if (type === "delete") {
-        setUsers((prev) => prev.filter((u) => u.uid !== userId));
-      }
+      toast.success(`Action complétée: ${confirmAction.type}`);
+      loadUsers();
     } catch (error) {
       const errorMsg =
-        error instanceof Error ? error.message : "Erreur lors de l'action";
+        error instanceof Error ? error.message : "Erreur lors de l'opération";
       toast.error(errorMsg);
-      console.error("Action error:", error);
     } finally {
       setActionLoading(null);
       setConfirmAction(null);
     }
   };
 
+  const filteredUsers = users.filter(
+    (user) =>
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const stats = {
+    total: users.length,
+    admins: users.filter((u) => u.isAdmin).length,
+    pro: users.filter((u) => u.plan === "Pro").length,
+    banned: users.filter((u) => u.isBanned).length,
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 size={32} className="animate-spin text-foreground/60" />
+        <Loader2 className="w-8 h-8 animate-spin text-white/60" />
       </div>
     );
   }
@@ -246,358 +205,250 @@ export default function AdminUsersSection() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-20px font-semibold text-white">
             Gestion des utilisateurs
           </h2>
-          <p className="text-sm text-foreground/60 mt-1">
-            {users.length} utilisateur{users.length !== 1 ? "s" : ""} au total
+          <p className="text-13px text-white/60 mt-1">
+            Découvrir et gérer {stats.total} utilisateurs actifs
           </p>
         </div>
+
+        {/* Search */}
+        <input
+          type="text"
+          placeholder="Rechercher par email ou nom..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className={dsClasses.input}
+        />
       </div>
 
+      {/* Error State */}
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle size={20} className="text-red-400 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-red-300">{error}</p>
-              <button
-                onClick={() => {
-                  const controller = new AbortController();
-                  abortControllerRef.current = controller;
-                  loadUsers(controller.signal);
-                }}
-                className="text-xs text-red-300/70 hover:text-red-300 mt-2 underline"
-              >
-                Réessayer
-              </button>
-            </div>
+        <div
+          className={`${dsClasses.card} border-red-500/30 bg-red-500/10 p-4 flex items-start gap-3`}
+        >
+          <AlertCircle
+            size={18}
+            className="text-red-400 mt-0.5 flex-shrink-0"
+          />
+          <div>
+            <p className="text-sm font-medium text-red-300">{error}</p>
+            <button
+              onClick={() => loadUsers()}
+              disabled={loading}
+              className="text-xs text-red-300/70 hover:text-red-300 mt-2 underline"
+            >
+              Réessayer
+            </button>
           </div>
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <StatCard
-          label="Utilisateurs"
-          value={users.length.toString()}
-          color="blue"
-        />
-        <StatCard
-          label="Administrateurs"
-          value={users.filter((u) => u.isAdmin).length.toString()}
-          color="purple"
-        />
-        <StatCard
-          label="Plan Pro"
-          value={users
-            .filter((u) => u.plan === "Pro" || u.plan === "Classic")
-            .length.toString()}
-          color="emerald"
-        />
-        <StatCard
-          label="Bannies"
-          value={users.filter((u) => (u as any).isBanned).length.toString()}
-          color="red"
-        />
-      </div>
-
       {/* Users List */}
-      <div className="rounded-lg border border-white/5 overflow-hidden bg-white/[0.02]">
-        {users.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <p className="text-foreground/60">Aucun utilisateur</p>
+      <div className="space-y-3">
+        {filteredUsers.length === 0 ? (
+          <div className={`${dsClasses.card} p-8 text-center`}>
+            <User size={32} className="mx-auto text-white/30 mb-3" />
+            <p className="text-14px text-white/60">Aucun utilisateur trouvé</p>
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
-            {users.map((user) => (
-              <div
-                key={user.uid}
-                className="hover:bg-white/[0.03] transition-colors"
-              >
-                {/* User Row */}
-                <div
-                  className="px-6 py-4 flex items-center justify-between cursor-pointer"
-                  onClick={() =>
-                    setExpandedUser(expandedUser === user.uid ? null : user.uid)
-                  }
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <p className="text-white font-medium">{user.email}</p>
-                        <p className="text-xs text-foreground/50 font-mono mt-1">
-                          {user.uid.substring(0, 12)}...
-                        </p>
+          filteredUsers.map((user, index) => (
+            <div
+              key={user.uid}
+              className={`${dsClasses.card} p-4 animate-slideUp hover:border-white/10 transition-all duration-200`}
+              style={{ animationDelay: `${index * 30}ms` }}
+            >
+              <div className="flex items-center justify-between gap-4">
+                {/* User Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center flex-shrink-0">
+                      <User size={18} className="text-white/80" />
+                    </div>
+
+                    {/* Email & Name */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-14px font-medium text-white truncate">
+                        {user.displayName || "Sans nom"}
+                      </p>
+                      <div className="flex items-center gap-2 text-12px text-white/60 mt-0.5">
+                        <Mail size={11} />
+                        <span className="truncate">{user.email}</span>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-white/10 text-white">
-                        {user.plan}
-                      </span>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-foreground/80 text-sm">
-                        {user.messagesUsed} / {user.messagesLimit}
-                      </p>
-                      <p className="text-xs text-foreground/50">Messages</p>
-                    </div>
-
-                    <StatusBadge
-                      isAdmin={user.isAdmin}
-                      isBanned={(user as any).isBanned}
-                    />
-
-                    <ChevronDown
-                      size={20}
-                      className={`text-foreground/60 transition-transform ${expandedUser === user.uid ? "rotate-180" : ""}`}
-                    />
                   </div>
                 </div>
 
-                {/* Expanded Actions */}
-                {expandedUser === user.uid && (
-                  <div className="px-6 py-4 bg-white/[0.02] border-t border-white/5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {!user.isAdmin ? (
-                        <ActionButton
-                          icon={Shield}
-                          label="Promouvoir"
-                          color="purple"
-                          loading={actionLoading === user.uid}
-                          onClick={() =>
-                            setConfirmAction({
-                              type: "promote",
-                              userId: user.uid,
-                              email: user.email,
-                            })
-                          }
-                        />
-                      ) : (
-                        <ActionButton
-                          icon={User}
-                          label="Rétrograder"
-                          color="slate"
-                          loading={actionLoading === user.uid}
-                          onClick={() =>
-                            setConfirmAction({
-                              type: "demote",
-                              userId: user.uid,
-                              email: user.email,
-                            })
-                          }
-                        />
-                      )}
-
-                      {!(user as any).isBanned ? (
-                        <ActionButton
-                          icon={Ban}
-                          label="Bannir"
-                          color="red"
-                          loading={actionLoading === user.uid}
-                          onClick={() =>
-                            setConfirmAction({
-                              type: "ban",
-                              userId: user.uid,
-                              email: user.email,
-                            })
-                          }
-                        />
-                      ) : (
-                        <ActionButton
-                          icon={Ban}
-                          label="Débannir"
-                          color="amber"
-                          loading={actionLoading === user.uid}
-                          onClick={() =>
-                            setConfirmAction({
-                              type: "unban",
-                              userId: user.uid,
-                              email: user.email,
-                            })
-                          }
-                        />
-                      )}
-
-                      <ActionButton
-                        icon={RotateCcw}
-                        label="Réinit. messages"
-                        color="amber"
-                        loading={actionLoading === user.uid}
-                        onClick={() =>
-                          setConfirmAction({
-                            type: "reset",
-                            userId: user.uid,
-                            email: user.email,
-                          })
-                        }
-                      />
-
-                      <ActionButton
-                        icon={Trash2}
-                        label="Supprimer"
-                        color="red"
-                        loading={actionLoading === user.uid}
-                        onClick={() =>
-                          setConfirmAction({
-                            type: "delete",
-                            userId: user.uid,
-                            email: user.email,
-                          })
-                        }
-                      />
+                {/* Badges */}
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {user.isAdmin && (
+                    <div
+                      className={`${dsClasses.badge} ${dsClasses.badgeInfo}`}
+                    >
+                      <Shield size={11} />
+                      Admin
                     </div>
+                  )}
+                  {user.isBanned && (
+                    <div
+                      className={`${dsClasses.badge} ${dsClasses.badgeError}`}
+                    >
+                      <Ban size={11} />
+                      Banni
+                    </div>
+                  )}
+                  {user.plan && (
+                    <div
+                      className={`${dsClasses.badge} ${
+                        user.plan === "Pro"
+                          ? dsClasses.badgeSuccess
+                          : user.plan === "Classic"
+                            ? dsClasses.badgeWarning
+                            : dsClasses.badgeInfo
+                      }`}
+                    >
+                      {user.plan}
+                    </div>
+                  )}
+                </div>
 
-                    {/* Plan Selection */}
-                    <div className="mt-4 pt-4 border-t border-white/5">
-                      <p className="text-xs font-medium text-foreground/70 mb-3">
-                        Modifier le plan
+                {/* Actions Menu */}
+                <button
+                  onClick={() =>
+                    setExpandedUserId(
+                      expandedUserId === user.uid ? null : user.uid,
+                    )
+                  }
+                  className="p-1.5 text-white/40 hover:text-white/70 hover:bg-white/5 rounded-md transition-all"
+                >
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${
+                      expandedUserId === user.uid ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Expanded Actions */}
+              {expandedUserId === user.uid && (
+                <div className="mt-4 pt-4 border-t border-white/5 space-y-3 animate-slideUp">
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center">
+                      <p className="text-11px text-white/50 uppercase font-medium">
+                        Créé
                       </p>
-                      <div className="flex items-center gap-2">
-                        {(["Free", "Classic", "Pro"] as const).map((p) => (
-                          <button
-                            key={p}
-                            onClick={() =>
-                              setConfirmAction({
-                                type: "plan",
-                                userId: user.uid,
-                                email: user.email,
-                                plan: p,
-                              })
-                            }
-                            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                              user.plan === p
-                                ? "bg-blue-500 text-white"
-                                : "bg-white/10 hover:bg-white/20 text-foreground/80"
-                            }`}
-                            disabled={actionLoading === user.uid}
-                          >
-                            {p}
-                          </button>
-                        ))}
-                      </div>
+                      <p className="text-12px text-white mt-1">
+                        {user.createdAt?.toLocaleDateString?.("fr-FR") || "-"}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-11px text-white/50 uppercase font-medium">
+                        Messages
+                      </p>
+                      <p className="text-12px text-white mt-1">
+                        {user.messagesUsed} / {user.messagesLimit}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-11px text-white/50 uppercase font-medium">
+                        Statut
+                      </p>
+                      <p className="text-12px text-white mt-1">
+                        {user.isBanned ? "Banni" : "Actif"}
+                      </p>
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {!user.isAdmin && (
+                      <button
+                        onClick={() =>
+                          handleAction("promote", user.uid, user.email)
+                        }
+                        disabled={actionLoading !== null}
+                        className={`${dsClasses.buttonBase} text-12px px-3 py-1.5 rounded-md bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30`}
+                      >
+                        Promouvoir
+                      </button>
+                    )}
+                    {user.isAdmin && (
+                      <button
+                        onClick={() =>
+                          handleAction("demote", user.uid, user.email)
+                        }
+                        disabled={actionLoading !== null}
+                        className={`${dsClasses.buttonBase} text-12px px-3 py-1.5 rounded-md bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30`}
+                      >
+                        Rétrograder
+                      </button>
+                    )}
+                    {!user.isBanned && (
+                      <button
+                        onClick={() =>
+                          handleAction("ban", user.uid, user.email)
+                        }
+                        disabled={actionLoading !== null}
+                        className={`${dsClasses.buttonBase} text-12px px-3 py-1.5 rounded-md bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30`}
+                      >
+                        <Ban size={11} /> Bannir
+                      </button>
+                    )}
+                    {user.isBanned && (
+                      <button
+                        onClick={() =>
+                          handleAction("unban", user.uid, user.email)
+                        }
+                        disabled={actionLoading !== null}
+                        className={`${dsClasses.buttonBase} text-12px px-3 py-1.5 rounded-md bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30`}
+                      >
+                        Débannir
+                      </button>
+                    )}
+                    <button
+                      onClick={() =>
+                        handleAction("reset", user.uid, user.email)
+                      }
+                      disabled={actionLoading !== null}
+                      className={`${dsClasses.buttonBase} text-12px px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/15 text-white`}
+                    >
+                      <RotateCcw size={11} /> Reset
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleAction("delete", user.uid, user.email)
+                      }
+                      disabled={actionLoading !== null}
+                      className={`${dsClasses.buttonBase} text-12px px-3 py-1.5 rounded-md bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30`}
+                    >
+                      <Trash2 size={11} /> Supprimer
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
         )}
       </div>
 
-      {/* Confirm Modal */}
+      {/* Confirmation Modal */}
       {confirmAction && (
         <ActionConfirmModal
-          type={confirmAction.type}
-          email={confirmAction.email}
-          plan={confirmAction.plan}
+          isOpen={!!confirmAction}
+          title={`Confirmer: ${confirmAction.type}`}
+          description={`Êtes-vous sûr de vouloir effectuer cette action sur ${confirmAction.email} ?`}
           onConfirm={executeAction}
           onCancel={() => setConfirmAction(null)}
-          isLoading={actionLoading === confirmAction.userId}
+          isLoading={actionLoading !== null}
+          isDangerous={["ban", "delete"].includes(confirmAction.type)}
         />
       )}
     </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: "blue" | "purple" | "emerald" | "red" | "slate";
-}) {
-  const colors = {
-    blue: "bg-blue-500/10 border-blue-500/20 text-blue-400",
-    purple: "bg-purple-500/10 border-purple-500/20 text-purple-400",
-    emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-    red: "bg-red-500/10 border-red-500/20 text-red-400",
-    slate: "bg-slate-500/10 border-slate-500/20 text-slate-400",
-  };
-
-  return (
-    <div className={`rounded-lg border p-4 ${colors[color]}`}>
-      <p className="text-xs text-foreground/70 uppercase tracking-wide mb-1">
-        {label}
-      </p>
-      <p className="text-2xl font-semibold">{value}</p>
-    </div>
-  );
-}
-
-function StatusBadge({
-  isAdmin,
-  isBanned,
-}: {
-  isAdmin: boolean;
-  isBanned?: boolean;
-}) {
-  if (isBanned) {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
-        <Ban size={12} />
-        Banni
-      </span>
-    );
-  }
-
-  return isAdmin ? (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
-      <Shield size={12} />
-      Admin
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white/10 text-white">
-      <User size={12} />
-      User
-    </span>
-  );
-}
-
-function ActionButton({
-  icon: Icon,
-  label,
-  color,
-  loading,
-  onClick,
-}: {
-  icon: any;
-  label: string;
-  color: "purple" | "slate" | "red" | "amber";
-  loading: boolean;
-  onClick: () => void;
-}) {
-  const colors = {
-    purple:
-      "bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-500/30",
-    slate:
-      "bg-slate-500/20 hover:bg-slate-500/30 text-slate-300 border-slate-500/30",
-    red: "bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30",
-    amber:
-      "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/30",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={loading}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${colors[color]} disabled:opacity-50 disabled:cursor-not-allowed`}
-      title={label}
-    >
-      {loading ? (
-        <Loader2 size={14} className="animate-spin" />
-      ) : (
-        <Icon size={14} />
-      )}
-      {label}
-    </button>
   );
 }

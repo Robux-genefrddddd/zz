@@ -25,20 +25,26 @@ export default function AdminAIConfigSection() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch("/api/admin/ai-config");
-      const data = await response.json();
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("Non authentifié");
 
-      if (response.ok) {
-        setConfig(data);
-        setTempConfig({
-          ...data,
-          systemPrompt:
-            data.systemPrompt ||
-            "You are a helpful assistant. Always respond in the user's language.",
-        });
-      } else {
-        throw new Error(data.message || "Erreur de chargement");
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch("/api/admin/ai-config", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du chargement de la configuration");
       }
+
+      const data = await response.json();
+      setConfig(data);
+      setTempConfig({
+        ...data,
+        systemPrompt:
+          data.systemPrompt ||
+          "You are a helpful assistant. Always respond in the user's language.",
+      });
     } catch (error) {
       const errorMsg =
         error instanceof Error ? error.message : "Erreur de chargement";
