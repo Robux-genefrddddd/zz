@@ -14,7 +14,6 @@ import {
 import { toast } from "sonner";
 import { UserData } from "@/contexts/AuthContext";
 import { SystemNoticesService, UserBan } from "@/lib/system-notices";
-import { IPService } from "@/lib/ip-service";
 
 interface AdminBanManagementProps {
   users: UserData[];
@@ -28,15 +27,9 @@ export default function AdminBanManagement({ users }: AdminBanManagementProps) {
   const [bans, setBans] = useState<UserBan[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingBan, setSavingBan] = useState(false);
-  const [ipBans, setIPBans] = useState<any[]>([]);
-  const [banIPAddress, setBanIPAddress] = useState("");
-  const [banIPReason, setBanIPReason] = useState("");
-  const [banIPDuration, setBanIPDuration] = useState<number | null>(null);
-  const [savingIPBan, setSavingIPBan] = useState(false);
 
   // Search and filter states
   const [userSearchQuery, setUserSearchQuery] = useState("");
-  const [ipSearchQuery, setIPSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "ban" | "warn">("all");
   const [showExpired, setShowExpired] = useState(false);
 
@@ -49,9 +42,6 @@ export default function AdminBanManagement({ users }: AdminBanManagementProps) {
       setLoading(true);
       const allBans = await SystemNoticesService.getAllBans();
       setBans(allBans);
-
-      const allIPBans = await IPService.getAllIPBans();
-      setIPBans(allIPBans);
     } catch (error) {
       console.error("Error loading bans:", error);
       toast.error("Erreur lors du chargement des bans");
@@ -126,48 +116,6 @@ export default function AdminBanManagement({ users }: AdminBanManagementProps) {
     }
   };
 
-  const handleBanIP = async () => {
-    if (!banIPAddress || !banIPReason) {
-      toast.error("Entrez une adresse IP et une raison");
-      return;
-    }
-
-    setSavingIPBan(true);
-    try {
-      await IPService.banIP(
-        banIPAddress,
-        banIPReason,
-        banIPDuration || undefined,
-      );
-      toast.success("Adresse IP bannie avec succès");
-
-      setBanIPAddress("");
-      setBanIPReason("");
-      setBanIPDuration(null);
-      await loadBans();
-    } catch (error) {
-      console.error("Error in handleBanIP:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Erreur lors du ban IP";
-      toast.error(errorMessage);
-    } finally {
-      setSavingIPBan(false);
-    }
-  };
-
-  const handleUnbanIP = async (ipAddress: string) => {
-    try {
-      await IPService.unbanIP(ipAddress);
-      toast.success("Adresse IP débanni");
-      await loadBans();
-    } catch (error) {
-      console.error("Error in handleUnbanIP:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Erreur lors du déban IP";
-      toast.error(errorMessage);
-    }
-  };
-
   // Filtered and searched bans
   const filteredUserBans = useMemo(() => {
     let result = bans;
@@ -188,10 +136,6 @@ export default function AdminBanManagement({ users }: AdminBanManagementProps) {
 
     return result;
   }, [bans, filterType, showExpired, userSearchQuery]);
-
-  const filteredIPBans = useMemo(() => {
-    return ipBans.filter((ban) => ban.ipAddress.includes(ipSearchQuery));
-  }, [ipBans, ipSearchQuery]);
 
   const isExpired = (ban: UserBan) => {
     return ban.expiresAt && ban.expiresAt.toDate() < new Date();
@@ -344,82 +288,6 @@ export default function AdminBanManagement({ users }: AdminBanManagementProps) {
             </button>
           </div>
         </div>
-
-        {/* IP Ban Form */}
-        <div
-          className="rounded-2xl p-6"
-          style={{
-            background: "rgba(17, 17, 17, 0.6)",
-            border: "1px solid rgba(168, 85, 247, 0.2)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
-          }}
-        >
-          <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <AlertCircle size={20} className="text-purple-500" />
-            Bannir une adresse IP
-          </h3>
-
-          <div className="space-y-4">
-            {/* IP Address Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2 uppercase tracking-wide text-xs">
-                Adresse IP
-              </label>
-              <input
-                type="text"
-                value={banIPAddress}
-                onChange={(e) => setBanIPAddress(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-colors font-mono text-sm"
-                placeholder="192.168.1.1 ou 2001:db8::1"
-              />
-            </div>
-
-            {/* Reason Textarea */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2 uppercase tracking-wide text-xs">
-                <MessageSquare size={14} className="inline mr-2" />
-                Raison
-              </label>
-              <textarea
-                value={banIPReason}
-                onChange={(e) => setBanIPReason(e.target.value)}
-                rows={4}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-colors resize-none"
-                placeholder="Raison du bannissement IP..."
-              />
-            </div>
-
-            {/* Duration Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2 uppercase tracking-wide text-xs">
-                <Clock size={14} className="inline mr-2" />
-                Durée (minutes)
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={banIPDuration || ""}
-                onChange={(e) =>
-                  setBanIPDuration(
-                    e.target.value ? parseInt(e.target.value, 10) : null,
-                  )
-                }
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-colors"
-                placeholder="Laisser vide pour permanent"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              onClick={handleBanIP}
-              disabled={savingIPBan || !banIPAddress || !banIPReason}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-semibold rounded-xl border border-purple-500/50 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <AlertCircle size={18} />
-              {savingIPBan ? "Traitement..." : "Bannir l'IP"}
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* User Bans List */}
@@ -563,105 +431,6 @@ export default function AdminBanManagement({ users }: AdminBanManagementProps) {
                     </tr>
                   );
                 })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      {/* IP Bans List */}
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{
-          background: "rgba(17, 17, 17, 0.6)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
-        }}
-      >
-        {/* Header with Search */}
-        <div className="p-6 border-b border-white/10 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <AlertCircle size={20} className="text-purple-400" />
-              Adresses IP bannies ({filteredIPBans.length})
-            </h3>
-          </div>
-
-          {/* Search */}
-          <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-            />
-            <input
-              type="text"
-              placeholder="Rechercher par IP..."
-              value={ipSearchQuery}
-              onChange={(e) => setIPSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* IPs Table */}
-        <div className="overflow-x-auto">
-          {ipBans.length === 0 ? (
-            <div className="p-12 text-center">
-              <AlertCircle size={32} className="mx-auto text-gray-600 mb-3" />
-              <p className="text-gray-500">Aucune IP bannie</p>
-            </div>
-          ) : filteredIPBans.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-gray-500">Aucune IP trouvée</p>
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="border-b border-white/10 bg-white/[0.02]">
-                <tr>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-400">
-                    Adresse IP
-                  </th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-400">
-                    Raison
-                  </th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-400">
-                    Expire
-                  </th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredIPBans.map((ban) => (
-                  <tr
-                    key={`ip-ban-${ban.id}`}
-                    className="border-b border-white/10 hover:bg-white/5 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-white font-mono font-medium">
-                      {ban.ipAddress}
-                    </td>
-                    <td className="px-6 py-4 text-gray-400 text-sm truncate max-w-xs">
-                      {ban.reason}
-                    </td>
-                    <td className="px-6 py-4 text-gray-500 text-sm">
-                      {ban.isPermanent
-                        ? "Permanent"
-                        : ban.expiresAt
-                          ? new Date(ban.expiresAt).toLocaleDateString("fr-FR")
-                          : "-"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => handleUnbanIP(ban.ipAddress)}
-                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-purple-500/20 text-gray-400 hover:text-purple-400 transition-colors text-xs font-medium"
-                      >
-                        <Trash2 size={14} className="inline mr-1" />
-                        Retirer
-                      </button>
-                    </td>
-                  </tr>
-                ))}
               </tbody>
             </table>
           )}

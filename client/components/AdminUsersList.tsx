@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  query,
-  where,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Users,
@@ -16,13 +9,11 @@ import {
   X,
   Ban,
   AlertCircle,
-  Globe,
   TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { UserData, PlanType } from "@/contexts/AuthContext";
 import { SystemNoticesService } from "@/lib/system-notices";
-import { IPService, UserIP } from "@/lib/ip-service";
 
 interface AdminUsersListProps {
   onBanUser?: (email: string) => void;
@@ -34,12 +25,10 @@ export default function AdminUsersList({
   onWarnUser,
 }: AdminUsersListProps) {
   const { userData } = useAuth();
-  const [users, setUsers] = useState<(UserData & { ipInfo?: UserIP[] })[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<UserData>>({});
-  const [userIPs, setUserIPs] = useState<Record<string, UserIP[]>>({});
-  const [showIPAlert, setShowIPAlert] = useState<Record<string, boolean>>({});
 
   const planLimits: Record<PlanType, number> = {
     Free: 10,
@@ -53,23 +42,43 @@ export default function AdminUsersList({
 
   const loadUsers = async () => {
     try {
-      const usersRef = collection(db, "users");
-      const snapshot = await getDocs(usersRef);
-      const usersList = snapshot.docs
-        .map((doc) => doc.data() as UserData)
-        .filter((user) => user && user.uid);
+      // Get the current user's ID token
+      const user = auth.currentUser;
 
-      // Load IP information for each user
-      const ipsMap: Record<string, UserIP[]> = {};
-      for (const user of usersList) {
-        if (user.uid) {
-          const ips = await IPService.getUserIPs(user.uid);
-          ipsMap[user.uid] = ips;
-        }
+      if (!user) {
+        throw new Error("Not authenticated");
       }
-      setUserIPs(ipsMap);
+
+      const idToken = await user.getIdToken();
+
+      // Call the backend API to get all users
+      const response = await fetch("/api/admin/users", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw new Error("Invalid response from server");
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Erreur lors du chargement des utilisateurs",
+        );
+      }
+
+      const usersList = data.users as UserData[];
       setUsers(usersList);
     } catch (error) {
+      console.error("Error loading users:", error);
       toast.error("Erreur lors du chargement des utilisateurs");
     } finally {
       setLoading(false);
@@ -107,17 +116,10 @@ export default function AdminUsersList({
     onWarnUser?.(user.email);
   };
 
-  const getIPStatusColor = (userIP: UserIP) => {
-    if (userIP.isVPN) {
-      return "text-red-400";
-    }
-    return "text-green-400";
-  };
-
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-xl hover:border-blue-500/40 transition-all">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -141,42 +143,6 @@ export default function AdminUsersList({
           </div>
           <p className="text-2xl font-bold text-white">
             {users.filter((u) => u.plan !== "Free").length}
-          </p>
-        </div>
-
-        <div className="p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-xl hover:border-green-500/40 transition-all">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-green-500/20 rounded-lg">
-              <Globe size={18} className="text-green-400" />
-            </div>
-            <span className="text-foreground/60 text-xs uppercase font-semibold">
-              Cleans IPs
-            </span>
-          </div>
-          <p className="text-2xl font-bold text-white">
-            {
-              Object.values(userIPs)
-                .flat()
-                .filter((ip) => !ip.isVPN).length
-            }
-          </p>
-        </div>
-
-        <div className="p-4 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-xl hover:border-red-500/40 transition-all">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-red-500/20 rounded-lg">
-              <AlertCircle size={18} className="text-red-400" />
-            </div>
-            <span className="text-foreground/60 text-xs uppercase font-semibold">
-              VPN Users
-            </span>
-          </div>
-          <p className="text-2xl font-bold text-white">
-            {
-              Object.values(userIPs)
-                .flat()
-                .filter((ip) => ip.isVPN).length
-            }
           </p>
         </div>
       </div>
@@ -207,9 +173,6 @@ export default function AdminUsersList({
                     Utilisateur
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-foreground/70 uppercase">
-                    IP Adresses
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-foreground/70 uppercase">
                     Plan
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-foreground/70 uppercase">
@@ -235,33 +198,6 @@ export default function AdminUsersList({
                         <p className="text-xs text-foreground/50 mt-1">
                           ID: {user.uid.substring(0, 12)}...
                         </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        {userIPs[user.uid] && userIPs[user.uid].length > 0 ? (
-                          userIPs[user.uid].map((ip, idx) => (
-                            <div
-                              key={idx}
-                              className="text-sm flex items-center gap-2"
-                            >
-                              <span
-                                className={`${getIPStatusColor(ip)} font-mono text-xs`}
-                              >
-                                {ip.ipAddress.substring(0, 15)}...
-                              </span>
-                              {ip.isVPN && (
-                                <span className="text-red-400 text-xs bg-red-500/20 px-2 py-0.5 rounded">
-                                  VPN
-                                </span>
-                              )}
-                            </div>
-                          ))
-                        ) : (
-                          <span className="text-foreground/50 text-xs">
-                            Aucune IP
-                          </span>
-                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">

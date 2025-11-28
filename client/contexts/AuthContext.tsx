@@ -62,6 +62,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [maintenanceNotice, setMaintenanceNotice] =
     useState<MaintenanceNotice | null>(null);
 
+  // Polling for maintenance notices (every 30 seconds)
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    const checkMaintenance = async () => {
+      if (!isMounted) return;
+
+      try {
+        const maintenance =
+          await SystemNoticesService.getActiveMaintenanceNotice();
+        if (isMounted) {
+          setMaintenanceNotice(maintenance);
+        }
+      } catch (error) {
+        console.error("Error checking maintenance notices:", error);
+      }
+
+      if (isMounted) {
+        timeoutId = setTimeout(checkMaintenance, 30000); // Check every 30 seconds
+      }
+    };
+
+    // Check immediately on mount
+    checkMaintenance();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  // Auth state listener
   useEffect(() => {
     let isMounted = true;
 
@@ -76,13 +109,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const ban = await SystemNoticesService.getUserBan(authUser.uid);
           if (isMounted) {
             setUserBan(ban);
-          }
-
-          // Check for active maintenance
-          const maintenance =
-            await SystemNoticesService.getActiveMaintenanceNotice();
-          if (isMounted) {
-            setMaintenanceNotice(maintenance);
           }
 
           const userDocRef = doc(db, "users", authUser.uid);

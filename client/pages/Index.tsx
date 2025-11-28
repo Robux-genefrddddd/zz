@@ -8,7 +8,6 @@ import { Sidebar } from "@/components/Sidebar";
 import { ChatArea } from "@/components/ChatArea";
 import { SystemNoticeModal } from "@/components/SystemNoticeModal";
 import { MessageLimitModal } from "@/components/MessageLimitModal";
-import { DisclaimerModal } from "@/components/DisclaimerModal";
 import { Menu, Loader2 } from "lucide-react";
 import { MessagesService } from "@/lib/messages";
 import { toast } from "sonner";
@@ -17,11 +16,8 @@ export default function Index() {
   const { loading, userBan, maintenanceNotice, user, userData } = useAuth();
   const { isDark } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [acknowledgedMaintenance, setAcknowledgedMaintenance] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string>();
-  const [disclaimerAccepted, setDisclaimerAccepted] = useState(
-    userData?.disclaimerAccepted || false,
-  );
+  const [acknowledgedMaintenance, setAcknowledgedMaintenance] = useState(false);
 
   useEffect(() => {
     // Load first conversation if available
@@ -51,33 +47,6 @@ export default function Index() {
       signOut(auth).catch(console.error);
     }
   }, [userBan]);
-
-  useEffect(() => {
-    // Update disclaimer state when userData changes
-    if (userData?.disclaimerAccepted) {
-      setDisclaimerAccepted(true);
-    }
-  }, [userData?.disclaimerAccepted]);
-
-  const handleDisclaimerAccept = async () => {
-    try {
-      if (user?.uid) {
-        const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, {
-          disclaimerAccepted: true,
-          disclaimerAcceptedAt: Date.now(),
-        });
-        setDisclaimerAccepted(true);
-      }
-    } catch (error) {
-      console.error("Error accepting disclaimer:", error);
-      toast.error("Erreur lors de l'enregistrement du disclaimer");
-    }
-  };
-
-  const handleDisclaimerDecline = () => {
-    signOut(auth).catch(console.error);
-  };
 
   if (loading) {
     return (
@@ -116,43 +85,21 @@ export default function Index() {
     );
   }
 
-  // Show disclaimer modal if not accepted
-  if (!disclaimerAccepted) {
+  // Show maintenance modal (critical = non-dismissible and blocks app)
+  if (maintenanceNotice) {
     return (
-      <DisclaimerModal
-        isOpen={true}
-        onAccept={handleDisclaimerAccept}
-        onDecline={handleDisclaimerDecline}
+      <SystemNoticeModal
+        type="maintenance"
+        title={maintenanceNotice.title}
+        message={maintenanceNotice.message}
+        severity={maintenanceNotice.severity}
+        onAcknowledge={
+          maintenanceNotice.severity === "critical"
+            ? undefined
+            : () => setAcknowledgedMaintenance(true)
+        }
+        dismissible={maintenanceNotice.severity !== "critical"}
       />
-    );
-  }
-
-  // Show maintenance modal (dismissible)
-  if (maintenanceNotice && !acknowledgedMaintenance) {
-    return (
-      <>
-        <SystemNoticeModal
-          type="maintenance"
-          title={maintenanceNotice.title}
-          message={maintenanceNotice.message}
-          severity={maintenanceNotice.severity}
-          onAcknowledge={() => setAcknowledgedMaintenance(true)}
-          dismissible={maintenanceNotice.severity !== "critical"}
-        />
-        {maintenanceNotice.severity !== "critical" && (
-          <div className="flex h-screen bg-background opacity-50 pointer-events-none">
-            <Sidebar
-              isOpen={sidebarOpen}
-              onClose={() => setSidebarOpen(false)}
-              activeConversationId={activeConversationId}
-              onConversationSelect={setActiveConversationId}
-            />
-            <div className="flex-1 flex flex-col md:flex-row">
-              <ChatArea conversationId={activeConversationId} />
-            </div>
-          </div>
-        )}
-      </>
     );
   }
 
