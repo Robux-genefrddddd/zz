@@ -112,13 +112,12 @@ export const handleUnbanUser: RequestHandler = async (req, res) => {
 
     await FirebaseAdminService.unbanUser(adminUid, userId);
 
-    res.json({ success: true, message: "User unbanned" });
+    return res.json({ success: true, message: "User unbanned" });
   } catch (error) {
     console.error("Unban user error:", error);
     const status = error instanceof z.ZodError ? 400 : 401;
-    res.status(status).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -132,13 +131,12 @@ export const handleResetMessages: RequestHandler = async (req, res) => {
 
     await FirebaseAdminService.resetUserMessages(adminUid, userId);
 
-    res.json({ success: true, message: "Messages reset" });
+    return res.json({ success: true, message: "Messages reset" });
   } catch (error) {
     console.error("Reset messages error:", error);
     const status = error instanceof z.ZodError ? 400 : 401;
-    res.status(status).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -152,13 +150,12 @@ export const handleDeleteUser: RequestHandler = async (req, res) => {
 
     await FirebaseAdminService.deleteUser(adminUid, userId);
 
-    res.json({ success: true, message: "User deleted" });
+    return res.json({ success: true, message: "User deleted" });
   } catch (error) {
     console.error("Delete user error:", error);
     const status = error instanceof z.ZodError ? 400 : 401;
-    res.status(status).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -177,13 +174,12 @@ export const handleUpdateUserPlan: RequestHandler = async (req, res) => {
 
     await FirebaseAdminService.updateUserPlan(adminUid, userId, plan);
 
-    res.json({ success: true, message: "User plan updated" });
+    return res.json({ success: true, message: "User plan updated" });
   } catch (error) {
     console.error("Update user plan error:", error);
     const status = error instanceof z.ZodError ? 400 : 401;
-    res.status(status).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -195,12 +191,11 @@ export const handleGetLicenses: RequestHandler = async (req, res) => {
 
     const licenses = await FirebaseAdminService.getAllLicenses();
 
-    res.json({ success: true, licenses });
+    return res.json({ success: true, licenses });
   } catch (error) {
     console.error("Get licenses error:", error);
-    res.status(401).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(401).json({ success: false, message });
   }
 };
 
@@ -223,13 +218,12 @@ export const handleCreateLicense: RequestHandler = async (req, res) => {
       validityDays,
     );
 
-    res.json({ success: true, license: { key: licenseKey, plan } });
+    return res.json({ success: true, license: { key: licenseKey, plan } });
   } catch (error) {
     console.error("Create license error:", error);
     const status = error instanceof z.ZodError ? 400 : 401;
-    res.status(status).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -247,13 +241,12 @@ export const handleInvalidateLicense: RequestHandler = async (req, res) => {
 
     await FirebaseAdminService.invalidateLicense(adminUid, licenseKey);
 
-    res.json({ success: true, message: "License invalidated" });
+    return res.json({ success: true, message: "License invalidated" });
   } catch (error) {
     console.error("Invalidate license error:", error);
     const status = error instanceof z.ZodError ? 400 : 401;
-    res.status(status).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -261,12 +254,11 @@ export const handleInvalidateLicense: RequestHandler = async (req, res) => {
 export const handleGetAIConfig: RequestHandler = async (req, res) => {
   try {
     const config = await FirebaseAdminService.getAIConfig();
-    res.json(config);
+    return res.json(config);
   } catch (error) {
     console.error("Get AI config error:", error);
-    res.status(500).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(500).json({ success: false, message });
   }
 };
 
@@ -287,13 +279,12 @@ export const handleUpdateAIConfig: RequestHandler = async (req, res) => {
 
     await FirebaseAdminService.updateAIConfig(adminUid, config);
 
-    res.json({ success: true, config });
+    return res.json({ success: true, config });
   } catch (error) {
     console.error("Update AI config error:", error);
     const status = error instanceof z.ZodError ? 400 : 401;
-    res.status(status).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -305,12 +296,11 @@ export const handleGetSystemStats: RequestHandler = async (req, res) => {
 
     const stats = await FirebaseAdminService.getSystemStats();
 
-    res.json(stats);
+    return res.json(stats);
   } catch (error) {
     console.error("Get system stats error:", error);
-    res.status(401).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(401).json({ success: false, message });
   }
 };
 
@@ -322,12 +312,11 @@ export const handlePurgeLicenses: RequestHandler = async (req, res) => {
 
     const deleted = await FirebaseAdminService.purgeInvalidLicenses(adminUid);
 
-    res.json({ success: true, deleted });
+    return res.json({ success: true, deleted });
   } catch (error) {
     console.error("Purge licenses error:", error);
-    res.status(401).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(401).json({ success: false, message });
   }
 };
 
@@ -339,12 +328,11 @@ export const handleGetAdminLogs: RequestHandler = async (req, res) => {
 
     const logs = await FirebaseAdminService.getAdminLogs();
 
-    res.json({ success: true, logs });
+    return res.json({ success: true, logs });
   } catch (error) {
     console.error("Get admin logs error:", error);
-    res.status(401).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(401).json({ success: false, message });
   }
 };
 
@@ -362,13 +350,12 @@ export const handleClearOldLogs: RequestHandler = async (req, res) => {
 
     const deleted = await FirebaseAdminService.clearOldLogs(adminUid, daysOld);
 
-    res.json({ success: true, deleted });
+    return res.json({ success: true, deleted });
   } catch (error) {
     console.error("Clear old logs error:", error);
     const status = error instanceof z.ZodError ? 400 : 401;
-    res.status(status).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -380,12 +367,11 @@ export const handleGetBannedUsers: RequestHandler = async (req, res) => {
 
     const bannedUsers = await FirebaseAdminService.getBannedUsers();
 
-    res.json({ success: true, bannedUsers });
+    return res.json({ success: true, bannedUsers });
   } catch (error) {
     console.error("Get banned users error:", error);
-    res.status(401).json({
-      message: error instanceof Error ? error.message : "Operation failed",
-    });
+    const message = error instanceof Error ? error.message : "Operation failed";
+    return res.status(401).json({ success: false, message });
   }
 };
 
@@ -394,11 +380,10 @@ export const handleVerifyAdmin: RequestHandler = async (req, res) => {
   try {
     const idToken = extractIdToken(req.headers.authorization);
     const adminUid = await FirebaseAdminService.verifyAdmin(idToken);
-    res.json({ success: true, adminUid });
+    return res.json({ success: true, adminUid });
   } catch (error) {
     console.error("Verify admin error:", error);
-    res.status(401).json({
-      message: error instanceof Error ? error.message : "Unauthorized",
-    });
+    const message = error instanceof Error ? error.message : "Unauthorized";
+    return res.status(401).json({ success: false, message });
   }
 };
