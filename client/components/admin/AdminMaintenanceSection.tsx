@@ -12,6 +12,14 @@ import {
 } from "lucide-react";
 import MaintenanceModal, { MaintenanceType, MaintenanceData } from "./MaintenanceModal";
 
+interface MaintenanceStatus {
+  global: boolean;
+  partial: boolean;
+  services: string[];
+  message: string;
+  startedAt: any;
+}
+
 export default function AdminMaintenanceSection() {
   const [loading, setLoading] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
@@ -26,6 +34,44 @@ export default function AdminMaintenanceSection() {
     count: number;
     timestamp: Date;
   } | null>(null);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus | null>(null);
+  const [fetchingStatus, setFetchingStatus] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    fetchMaintenanceStatus(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  const fetchMaintenanceStatus = async (signal?: AbortSignal) => {
+    try {
+      setFetchingStatus(true);
+      const response = await fetch("/api/admin/maintenance-status", { signal });
+
+      if (!response.ok) {
+        throw new Error("Impossible de récupérer le statut");
+      }
+
+      const data = await response.json();
+      if (data.success && data.status) {
+        setMaintenanceStatus(data.status);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+      console.error("Error fetching maintenance status:", error);
+    } finally {
+      setFetchingStatus(false);
+    }
+  };
 
   const handleClearLogs = async () => {
     setLoading("clear-logs");
