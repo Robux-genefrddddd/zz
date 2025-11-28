@@ -39,6 +39,8 @@ interface Conversation {
   createdAt?: Date;
   updatedAt?: Date;
   messageCount?: number;
+  isTemporary?: boolean;
+  titleJustUpdated?: boolean;
 }
 
 interface SidebarProps {
@@ -112,26 +114,53 @@ export function Sidebar({
   const handleNewConversation = async () => {
     if (!user?.uid) return;
     try {
-      const conversationRef = await MessagesService.createConversation(
-        user.uid,
-        "Nouvelle conversation",
-      );
+      // Create conversation locally first with temporary title
+      const tempId = `temp_${Date.now()}`;
       const newConversation: Conversation = {
-        id: conversationRef.id,
+        id: tempId,
         name: "Nouvelle conversation",
         active: true,
+        isTemporary: true,
         createdAt: new Date(),
         updatedAt: new Date(),
         messageCount: 0,
       };
       setConversations([newConversation, ...conversations]);
-      onConversationSelect?.(conversationRef.id);
-      toast.success("Conversation créée");
+      onConversationSelect?.(tempId);
     } catch (error) {
       console.error("Error creating conversation:", error);
       toast.error("Erreur lors de la création de la conversation");
     }
   };
+
+  export function updateConversationTitle(
+    conversationId: string,
+    newTitle: string,
+  ) {
+    setConversations((prev) =>
+      prev.map((conv) => {
+        if (conv.id === conversationId) {
+          return {
+            ...conv,
+            name: newTitle,
+            isTemporary: false,
+            titleJustUpdated: true,
+          };
+        }
+        return conv;
+      }),
+    );
+    // Reset animation flag after animation completes
+    setTimeout(() => {
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === conversationId
+            ? { ...conv, titleJustUpdated: false }
+            : conv,
+        ),
+      );
+    }, 150);
+  }
 
   const handleLogout = async () => {
     try {
