@@ -17,6 +17,12 @@ import {
   handleCreateLicense,
   handleBanIP,
   handleDeleteUser,
+  handlePromoteUser,
+  handleDemoteUser,
+  handleResetMessages,
+  handleUnbanUser,
+  handleGetLicenses,
+  handleGetSystemStats,
 } from "./routes/admin";
 import {
   handleCheckIPBan,
