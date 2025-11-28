@@ -44,6 +44,13 @@ export async function handleDailyReset(req: Request, res: Response) {
 
     // Get user data
     const db = getAdminDb();
+
+    if (!db) {
+      return res.status(503).json({
+        error: "Service temporarily unavailable. Firebase not initialized.",
+      });
+    }
+
     const userDocRef = db.collection("users").doc(userId);
     const userDocSnap = await userDocRef.get();
 
