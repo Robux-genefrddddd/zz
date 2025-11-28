@@ -13,6 +13,7 @@ import {
   RateLimiter,
   escapeHtml,
 } from "@/lib/security";
+import { generateConversationTitle } from "@/lib/utils";
 import { toast } from "sonner";
 import { MessageRenderer } from "@/components/MessageRenderer";
 import { ThinkingAnimation } from "@/components/ThinkingAnimation";
@@ -28,9 +29,13 @@ interface ChatMessage {
 
 interface ChatAreaProps {
   conversationId?: string;
+  onConversationCreate?: (newId: string) => void;
 }
 
-export function ChatArea({ conversationId }: ChatAreaProps) {
+export function ChatArea({
+  conversationId,
+  onConversationCreate,
+}: ChatAreaProps) {
   const { user, userData } = useAuth();
   const { isDark } = useTheme();
   const [message, setMessage] = useState("");
@@ -45,6 +50,7 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
   const [blocks, setBlocks] = useState<string[]>([]);
   const [renderedBlockCount, setRenderedBlockCount] = useState(0);
   const [isRenderingBlocks, setIsRenderingBlocks] = useState(false);
+  const [isFirstMessage, setIsFirstMessage] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const blockIntervalRef = useRef<NodeJS.Timeout | null>(null);
