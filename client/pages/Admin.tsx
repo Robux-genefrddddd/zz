@@ -66,12 +66,7 @@ export default function Admin() {
           <div className="flex items-start justify-between gap-4">
             {/* Header Content */}
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                  <Lock size={20} className="text-white" />
-                </div>
-                <h1 className="text-[28px] font-bold text-white">Panneau Admin</h1>
-              </div>
+                  <h1 className="text-[28px] font-bold text-white">Panneau Admin</h1>
               <p className="text-14px text-white/60 ml-13">
                 Gestion et monitoring du système
               </p>
